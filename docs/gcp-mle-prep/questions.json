@@ -73,5 +73,229 @@
     "analogy": "Think of this like a Smoke Detector. You don't manually check for fire every day (static testing). You don't wait for neighbors to complain (user feedback). You want an alarm that fires automatically when it detects smoke (performance drop) so the fire brigade (retraining pipeline) responds immediately.",
     "explanation": "Vertex AI Model Monitoring watches your model in production, comparing live data against training data to detect drift and accuracy drops. You set thresholds (e.g. accuracy below 90%) and it automatically signals your pipeline to retrain — creating a self-healing system that requires zero manual intervention.",
     "why_not": "Option C sounds similar but tests against a static dataset — the real world keeps changing, so you might pass on old data while failing on live production data. Option D (Explainable AI) is for understanding why a prediction was made, not for triggering retraining pipelines. Option B (user feedback) is slow, subjective, and not automatic."
+  },
+  {
+    "id": 11,
+    "topic": "MLOps & Training Pipelines",
+    "question": "You have recently built a new internal automation tool in a Jupyter notebook for your company's IT operations. You want to set up a reliable and repeatable training workflow that keeps track of versions and lineage of your model artifacts. The plan is to retrain this automation model every week. How should you operationalize the training process?",
+    "options": {
+      "A": "1. Use the Vertex AI SDK to create a CustomTrainingJob for training. 2. Schedule weekly runs of the notebook code using the Notebooks API.",
+      "B": "1. Use the Vertex AI SDK to create a CustomJob for training. 2. Register the model artifact with the Metadata API. 3. Schedule weekly notebook executions using the Notebooks API.",
+      "C": "1. Build a managed pipeline in Vertex AI Pipelines with a CustomTrainingJobOp component for training. 2. Upload the trained model into Vertex AI Model Registry using ModelUploadOp. 3. Trigger the pipeline weekly using Cloud Scheduler and Cloud Run.",
+      "D": "1. Build a managed pipeline in Vertex AI Pipelines with a HyperParameterTuningJobRunOp component for training. 2. Upload the trained model into Vertex AI Model Registry using ModelUploadOp. 3. Trigger the pipeline weekly using Cloud Scheduler and Cloud Run."
+    },
+    "correct": "C",
+    "analogy": "Think of this like moving from cooking at home to running a restaurant kitchen. You are cooking in a Jupyter Notebook — it works for one meal but is messy and hard to repeat exactly the same way every time. To run a restaurant (IT Operations), you need an assembly line (Pipeline): a system where ingredients go in, a specific process happens, and a packaged meal comes out, tracked and logged every single time without standing there manually.",
+    "explanation": "Build a managed pipeline in Vertex AI Pipelines with a CustomTrainingJobOp component — this ensures every weekly run follows the exact same reliable, repeatable steps. ModelUploadOp sends the trained model to the Vertex AI Model Registry, providing automatic versioning and lineage tracking so you always know which data and code created which model version. Cloud Scheduler and Cloud Run trigger the pipeline weekly without any manual intervention.",
+    "why_not": "Option D uses HyperParameterTuningJobRunOp, designed for finding optimal settings — far more complex and costly than needed when you simply retrain on new data weekly. Options A and B both rely on scheduling Notebook executions, which is fragile and not production-grade. Notebooks lack proper lineage tracking, can fail silently, and are not a reliable MLOps pipeline."
+  },
+  {
+    "id": 12,
+    "topic": "Model Serving & Autoscaling",
+    "question": "You are working in an IT company where you have built a custom ML model using Vertex AI. The model needs to be deployed for online serving so that business applications can query it in real time. Your goal is to improve serving performance so the system can handle high throughput while keeping latency low. You want the simplest solution. What should you do?",
+    "options": {
+      "A": "Deploy the model on a Vertex AI endpoint so the backend scales automatically with workload. Adjust the endpoint's autoscaling configuration to reduce latency.",
+      "B": "Package the model in a container and run it on Cloud Run, tuning concurrency settings to process multiple requests at once.",
+      "C": "Use optimization methods like model pruning and quantization to shrink the model size. Retrain it in Vertex AI to improve speed, memory use, and throughput.",
+      "D": "Turn on request-response logging for the Vertex AI model. Analyze logs in Looker Studio to detect bottlenecks and then optimize performance."
+    },
+    "correct": "A",
+    "analogy": "Think of this like running a popular coffee shop during the morning rush — hundreds of customers needing coffee in under 2 minutes. You do not want to rebuild the coffee machine (Option C, pruning and quantization) or just watch security cameras to see where the line is long (Option D, logging). The simplest solution is to automatically open more checkout lanes when the line gets long.",
+    "explanation": "Vertex AI Endpoints are specifically designed to serve ML models with fully managed infrastructure. The simplest path to high throughput and low latency is Autoscaling — when traffic spikes, Vertex AI automatically adds more serving nodes and removes them when traffic drops to save cost. No code changes and no retraining needed. You simply adjust the endpoint configuration, satisfying the simplest solution requirement perfectly.",
+    "why_not": "Option C (model pruning and quantization) requires complex development work and retraining — the opposite of the simplest solution. Option D (logging) is an observation tool, not a fix: it shows you where the problem is but does not resolve it. Option B (Cloud Run) is a generalist container service, while Vertex AI Endpoints are purpose-built for ML serving with native autoscaling, GPU support, and model monitoring."
+  },
+  {
+    "id": 13,
+    "topic": "LLM Fine-Tuning",
+    "question": "Your IT company needs to generate product summaries for vendors. You test a foundation model from Model Garden for text summarization, but the summaries do not match your company's brand voice. How should you improve this LLM-based summarization model to better meet business needs?",
+    "options": {
+      "A": "Switch to another pre-trained model from Model Garden.",
+      "B": "Apply fine-tuning using a company-specific dataset to align the model with brand voice.",
+      "C": "Adjust the temperature parameter to change the randomness of outputs.",
+      "D": "Tune the token output limit to control the length of responses."
+    },
+    "correct": "B",
+    "analogy": "Think of this like hiring a ghostwriter. You hired a talented writer (the foundation model) who summarizes accurately but writes in a formal, academic style. Your company uses a fun, casual, punchy style. You do not need a different writer (Option A) and do not need shorter sentences (Option D). You need to train this specific writer on your company's past blog posts so they internalize exactly how your brand sounds.",
+    "explanation": "The model is generic — it can summarize but does not know your company's tone, terminology, or style guidelines. Fine-tuning takes the pre-trained model and continues training it on a company-specific dataset of your past summaries or brand materials. This adjusts the model's weights to statistically match your brand voice, so future summaries naturally sound like they came from your company rather than a generic system.",
+    "why_not": "Option A (switching models) will not help — most foundation models are trained on generic internet data and all lack specific brand voice. Switching models does not add customization. Option C (temperature) controls randomness and creativity, not tone or writing style — it cannot make the model sound casual instead of formal. Option D (token limit) only changes response length, not voice, terminology, or style."
+  },
+  {
+    "id": 14,
+    "topic": "Distributed Training",
+    "question": "You are working in an IT company and have built a custom Vertex AI pipeline job that preprocesses images and trains an object detection model. The pipeline currently runs on one n1-standard-8 machine with one NVIDIA Tesla V100 GPU. You want to reduce the training time without losing model accuracy. What should you do?",
+    "options": {
+      "A": "Simplify the object detection model by reducing the number of layers.",
+      "B": "Reduce the dataset by training on a stratified subset.",
+      "C": "Update the WorkerPoolSpec to use a machine with 24 vCPUs and 1 NVIDIA Tesla V100 GPU.",
+      "D": "Update the WorkerPoolSpec to use a machine with 24 vCPUs and 3 NVIDIA Tesla V100 GPUs."
+    },
+    "correct": "D",
+    "analogy": "Think of this like painting a massive mural. Currently you have one artist (1 GPU) working on the wall — working as fast as possible but taking too long. You want the mural finished faster without lowering the quality (accuracy). You would not ask the artist to use fewer colors (Option A) or paint only half the wall (Option B). Instead, you hire more artists (more GPUs) to work on different sections simultaneously.",
+    "explanation": "Training deep learning models is heavy mathematical work done primarily by GPUs. By updating the WorkerPoolSpec to include 3 NVIDIA Tesla V100 GPUs instead of one, you enable distributed training — the workload is split across three powerful GPUs simultaneously, dramatically cutting training time. Upgrading to 24 vCPUs ensures the CPU can preprocess and feed image data to all three GPUs fast enough so they never sit idle. The model still sees all data and uses all layers, so accuracy is fully preserved.",
+    "why_not": "Option C adds more CPUs but keeps the single GPU. More CPUs speed up image preprocessing but the GPU remains the training bottleneck — a faster feeder to a single engine does not make the engine faster. Option D is superior because it adds GPUs to share the heavy lifting. Option A (fewer layers) makes the model shallower and typically reduces accuracy. Option B (smaller dataset) means the model sees fewer examples, almost always resulting in lower accuracy."
+  },
+  {
+    "id": 15,
+    "topic": "BigQuery ML",
+    "question": "You are a SQL analyst in an IT company. A TensorFlow customer segmentation model is stored in Cloud Storage. You need to utilize this model using SQL in the simplest and most efficient way. What should you do?",
+    "options": {
+      "A": "Register the TensorFlow model in Vertex AI Model Registry, deploy it to a Vertex AI endpoint, and then run SQL queries in BigQuery to utilize the model.",
+      "B": "Deploy the TensorFlow model using TensorFlow Serving and trigger utilization from BigQuery.",
+      "C": "Convert the TensorFlow model into a BigQuery ML model and utilize it through SQL queries.",
+      "D": "Import the TensorFlow model into BigQuery and utilize it using SQL."
+    },
+    "correct": "D",
+    "analogy": "Think of this like using a foreign power plug. You have an appliance (the TensorFlow model) and want to plug it into your wall outlet (BigQuery SQL). You do not want to build a whole new power station (Option B, TensorFlow Serving), send electricity to a different building and back (Option A, Vertex AI endpoint), or dismantle and rebuild the appliance from scratch (Option C, converting the model). You just want a simple adapter that plugs it straight in.",
+    "explanation": "BigQuery has a native capability to import TensorFlow models directly from Cloud Storage. Once imported, the model becomes a BigQuery resource and you can immediately use standard SQL commands like ML.PREDICT to run predictions against your tables. There is no external infrastructure to manage, no servers or endpoints to deploy, and no conversion process. It is a direct load-and-run workflow — the simplest and most efficient path for a SQL analyst.",
+    "why_not": "Option A (Vertex AI endpoint) creates a detour — Vertex AI serves models via REST API, so you would need complex SQL scripts to call an external API from BigQuery. Option B (TensorFlow Serving) requires managing separate serving infrastructure that BigQuery must call externally — even more complex. Option C (converting the model) implies rebuilding the model into a native BigQuery ML type, which cannot perfectly replicate a custom TensorFlow architecture and forces you to abandon the existing model as-is."
+  },
+  {
+    "id": 16,
+    "topic": "Prompt Engineering",
+    "question": "You deployed a conversational IT support application that uses a large language model (LLM). Around 2,500 employees use it for troubleshooting. Feedback shows answers are factually correct, but users prefer different levels of detail depending on the type of query. You want responses more consistent with user expectations, and you need a scalable solution. What should you do?",
+    "options": {
+      "A": "Build a keyword-based routing layer. If input contains words like 'detailed' or 'explain,' return a verbose response. If it contains 'fact' or 'summary,' re-prompt the LLM for a concise response.",
+      "B": "Collect user-provided examples of responses with the desired verbosity as question-answer pairs. Use this dataset to perform supervised fine-tuning of the foundational model. Deploy the tuned model and re-evaluate.",
+      "C": "Gather user input on scenarios where concise versus verbose responses are expected. Modify the application's prompt template to include these scenarios and verbosity rules. Re-evaluate after updating prompts."
+    },
+    "correct": "C",
+    "analogy": "Think of this like managing a smart intern who knows every answer but writes a 10-page essay when you wanted a Yes or No, or gives one word when you needed detail. They do not have a knowledge problem — they need a better Style Guide. You do not need to send them back to university (fine-tuning). You just need to give them clearer instructions on how to format their reports.",
+    "explanation": "The problem is not accuracy but verbosity (delivery style). The most scalable fix is updating the prompt template to explicitly instruct the model: for summary queries keep responses concise, for troubleshooting provide step-by-step details. This instantly applies to all 2,500 users without any retraining. You are changing the instructions (software), not the model weights, so updates are fast and cost-free.",
+    "why_not": "Option A (keyword routing) is brittle — a user typing 'Explain briefly' would trigger the 'explain' keyword and receive a long answer despite asking for brevity. Keywords cannot understand nuance or intent the way an LLM following a well-crafted prompt can. Option B (supervised fine-tuning) is expensive and time-consuming. Fine-tuning is for teaching new knowledge or deep persona changes — controlling verbosity is basic instruction-following that a good prompt handles perfectly without retraining."
+  },
+  {
+    "id": 17,
+    "topic": "Vertex AI Endpoints",
+    "question": "You are an IT solutions architect at a mid-sized company moving analytics and machine learning workloads from on-premises servers to Google Cloud. You need a scalable, reliable, and cost-effective solution to serve prediction models for IT ticket resolution and system monitoring, without adding extra infrastructure management. What should you do?",
+    "options": {
+      "A": "Configure Compute Engine VMs to host the prediction models.",
+      "B": "Create a Cloud Run function to deploy the models as serverless functions.",
+      "C": "Set up a managed cluster on Google Kubernetes Engine (GKE) and package the models as containers.",
+      "D": "Deploy the models on Vertex AI endpoints."
+    },
+    "correct": "D",
+    "analogy": "Think of this like moving from a home generator to the city power grid. Option A is like buying a bigger generator (VMs) — you still maintain it yourself. Option C is like building your own power plant (Kubernetes) — powerful but incredibly complex to run. Option D is plugging into the City Grid (Vertex AI) — you flip a switch and power flows. You pay for what you use and the provider handles all maintenance.",
+    "explanation": "The key constraint is no extra infrastructure management. Vertex AI Endpoints are a fully managed service specifically designed for ML model serving — you upload your model and Vertex AI automatically handles the servers, autoscaling, and reliability. It abstracts away all infrastructure plumbing: no VMs to patch, no Kubernetes clusters to configure, no containers to manage manually. It is the most specialized and hands-off solution for machine learning serving on Google Cloud.",
+    "why_not": "Option A (Compute Engine VMs) is IaaS — you must install the OS, patch security holes, install ML libraries, and build your own scaling scripts. This directly contradicts the no-extra-management requirement. Option C (GKE) requires deep knowledge of pods, services, deployments, and node pools — significant management overhead for a mid-sized company. Option B (Cloud Run) is a generalist container service, while Vertex AI is purpose-built for ML with native GPU support, model monitoring, and traffic splitting."
+  },
+  {
+    "id": 18,
+    "topic": "Text Generation & Fine-Tuning",
+    "question": "You are building an AI text generator for your IT company's knowledge base. The tool must adapt its responses to match the writing style of employees and mimic well-known technical authors if their style is detected. You have a large dataset of technical documents. You want to use the most effective model. What should you do?",
+    "options": {
+      "A": "Deploy Llama 3 from Model Garden and apply prompt engineering techniques to adjust the generated responses.",
+      "B": "Fine-tune a BERT-based model from TensorFlow Hub and adapt it for text generation tasks.",
+      "C": "Fine-tune Llama 3 from Model Garden using Vertex AI Pipelines to train on your dataset and manage the workflow.",
+      "D": "Use the Gemini 1.5 Flash foundational model to build the text generator without fine-tuning."
+    },
+    "correct": "C",
+    "analogy": "Think of this like hiring an impersonator. Prompt engineering (Options A and D) is like giving an actor a script and saying try to sound like this — they still sound like themselves reading a script. Fine-tuning (Option C) is like sending the actor to method acting school for 3 months where they only study your company documents and those specific authors. When they come out, they do not just act the style — they have fully internalized it.",
+    "explanation": "To achieve the most effective style adaptation, you need to change the model's internal knowledge through fine-tuning, not just its instructions. Fine-tuning Llama 3 on your large dataset adjusts the model's weights to statistically predict the next word in a way that matches the target writing styles. Llama 3 is a powerful LLM designed for text generation. Using Vertex AI Pipelines ensures the training process across your large dataset is managed, repeatable, and scalable.",
+    "why_not": "Option B (BERT) is fundamentally the wrong architecture — BERT is an encoder model designed to understand and classify text, not to generate new text. Using BERT for generation is like using a microwave to freeze ice cream. Options A and D rely on prompting without fine-tuning — while fast, prompt engineering struggles to consistently mimic complex, specific writing styles. Since the question emphasizes a large dataset and asks for the most effective solution, fine-tuning is clearly superior to prompting."
+  },
+  {
+    "id": 19,
+    "topic": "Autoscaling & Cost Optimization",
+    "question": "You work at an IT company that manages a large enterprise support platform. You built a fraud detection model using scikit-learn and deployed it to a Vertex AI endpoint running on one e2-standard-2 machine with 2 vCPUs and 8 GB memory. Incoming traffic sometimes spikes to four times the endpoint's capacity. You need to solve this using the most cost-effective approach. What should you do?",
+    "options": {
+      "A": "Re-deploy the model with a TPU accelerator to handle higher traffic loads.",
+      "B": "Change the machine type to e2-highcpu-32 with 32 vCPUs and 32 GB memory.",
+      "C": "Set up a monitoring job and alert for CPU usage, then scale vCPUs manually when alerts are triggered.",
+      "D": "Increase the number of maximum replicas to 6 nodes, each running on one e2-standard-2 machine."
+    },
+    "correct": "D",
+    "analogy": "Think of this like running a pizza restaurant with one chef. During Friday night rush you get 4x the orders. Option B is like hiring 15 extra chefs to stand around all week just in case Friday gets busy — wasteful. Option C is waiting for customers to complain, then calling chefs to come in from home — too slow. Option D is having on-call part-time chefs who automatically show up when the line gets long and go home when it is quiet. You only pay for the hours they actually work.",
+    "explanation": "The traffic is variable — normal most of the time, 4x during spikes. Setting the maximum replicas to 6 lets Vertex AI automatically spin up extra e2-standard-2 nodes during spikes and shut them down when traffic normalizes. You only pay for extra capacity during the spike itself. For the rest of the time, you pay for just one small machine. Each replica uses the same cost-efficient machine type, so there is no over-provisioning.",
+    "why_not": "Option B (e2-highcpu-32) means paying for 32 vCPUs 24 hours a day, 7 days a week, even when traffic is normal — wasteful for 90% of the time. Option A (TPU) is technically incompatible — TPUs are designed for TensorFlow deep learning models, not scikit-learn traditional ML. Option C (manual scaling) is too slow — by the time an alert fires and you manually add capacity, users have already experienced errors or timeouts. Autoscaling in Option D reacts in seconds automatically."
+  },
+  {
+    "id": 20,
+    "topic": "Model Monitoring & Drift",
+    "question": "You are an IT engineer maintaining a customer support system. A machine learning model deployed on Vertex AI predicts ticket escalation risk based on historical support data. After several weeks in production, the model's AUC score has dropped compared to its training performance. How should you investigate this issue?",
+    "options": {
+      "A": "Check training/serving skew of feature values for incoming requests at the endpoint.",
+      "B": "Track endpoint resource usage such as CPU and memory to see if system load is affecting performance.",
+      "C": "Use Explainable AI feature attribution to review how features influence predictions and gain insights into model behavior.",
+      "D": "Measure endpoint latency to confirm whether prediction response times are within expected limits."
+    },
+    "correct": "A",
+    "analogy": "Think of this like a student who studied old textbooks and got an A+ on the practice exam but got a C- on the real final. The most likely reason is the final exam questions were different from the textbook — the real world changed. The data being fed to the model in production is now different from what it learned on during training. This mismatch is called Training/Serving Skew.",
+    "explanation": "A drop in AUC is a classic symptom of Training/Serving Skew — the data distribution in production has shifted away from the historical training data. By checking for skew, you compare the statistical properties of your training data against the live incoming request data. If they look significantly different, the model is confused because the real world has changed. For example, a new software update may have created completely new types of support tickets the model has never seen before.",
+    "why_not": "Options B (CPU/memory) and D (latency) measure infrastructure performance, not prediction quality. A server can run fast with low latency and still produce completely wrong predictions. Since the problem is the AUC score (prediction quality), checking hardware metrics will not identify the root cause. Option C (Explainable AI) helps understand why the model made a specific individual prediction, but is not the right first step for diagnosing a general performance drop — you first need to confirm data drift before diving into individual explanations."
+  },
+  {
+    "id": 21,
+    "topic": "Custom Training Containers",
+    "question": "You are working on an IT analytics project where you need to train an XGBoost model on a small dataset. Your training script requires custom dependencies. You must configure a Vertex AI custom training job. The objective is to reduce startup time while following Google's recommended practices. Which setup should you choose?",
+    "options": {
+      "A": "Build a custom container image that bundles both the dataset and the custom dependencies. In your training script, load the dataset into a pandas DataFrame and train the model.",
+      "B": "Keep the dataset in Cloud Storage and use the XGBoost prebuilt container to run your training script. Package a Python source distribution that installs the custom dependencies during runtime. Read the dataset from Cloud Storage and train the model.",
+      "C": "Use the XGBoost prebuilt container. Package a Python source distribution that contains the dataset and installs the custom dependencies during runtime. Load the dataset into a pandas DataFrame and train the model.",
+      "D": "Store the dataset in Cloud Storage and create a custom container image that includes your training script and its custom dependencies. Read the dataset from Cloud Storage and train the model."
+    },
+    "correct": "D",
+    "analogy": "Think of this like preparing for a road trip. The dataset is your luggage and the dependencies are your tools (GPS, chargers, snacks). Option B is driving an empty car but stopping at 5 stores along the way to buy tools — slow startup. Option A is packing your luggage inside the car engine — bad practice. Option D is packing all tools in the car before you leave and putting luggage in the trunk (Cloud Storage) — you drive immediately and everything is in the right place.",
+    "explanation": "A custom container image with your training script and custom dependencies pre-installed means the container is ready to run the moment it spins up — eliminating the time spent downloading and installing packages at runtime. This directly reduces startup time. Following Google best practices, the dataset stays in Cloud Storage (not inside the container) so it can be versioned, updated, and shared without rebuilding the container image every time data changes.",
+    "why_not": "Option B installs custom dependencies at runtime — every job start requires downloading and installing packages first, adding significant startup latency. The question specifically asks to reduce startup time. Option A bundles the dataset inside the container image — a major anti-pattern that creates bloated, slow-to-deploy containers. If data updates, you must rebuild the entire container. Option C combines both bad practices: installs dependencies at runtime and bundles the dataset inside the package."
+  },
+  {
+    "id": 22,
+    "topic": "A/B Testing",
+    "question": "Your IT team has deployed multiple versions of an ML model into the Vertex AI Model Registry. You want to run A/B testing to determine which version performs best, using the simplest setup. What approach should you choose?",
+    "options": {
+      "A": "Distribute incoming prediction requests across the model versions and track their performance using Vertex AI's built-in monitoring tools.",
+      "B": "Route incoming traffic across different Google Kubernetes Engine (GKE) clusters, use Traffic Director to send requests to each version, and monitor results with Cloud Monitoring.",
+      "C": "Split prediction requests among the model versions and compare their logged performance data using Looker Studio dashboards.",
+      "D": "Deploy each model version on separate Cloud Run instances, split traffic between them, and monitor results with Cloud Monitoring."
+    },
+    "correct": "A",
+    "analogy": "Think of this like testing two checkout lanes at a grocery store. You have Lane A (Model v1) and Lane B (Model v2). The simple way: tell the store manager (Vertex AI) to send 50% of customers to each lane, and the store's existing cameras (built-in monitoring) automatically record performance. The hard way: build two separate buildings (GKE or Cloud Run), hire your own traffic directors, and install your own cameras (Looker Studio or Cloud Monitoring).",
+    "explanation": "Vertex AI Endpoints have a native Traffic Splitting feature — deploy multiple model versions to the same endpoint and assign a percentage of traffic to each version (e.g., 50% to v1, 50% to v2). Vertex AI's built-in Model Monitoring automatically tracks metrics like latency, error rates, and prediction quality for each version without any extra infrastructure or dashboards. This approach requires zero additional setup — entirely managed within the Vertex AI console.",
+    "why_not": "Option B (GKE + Traffic Director) is massive overkill — Kubernetes is for complex containerized application orchestration, not for splitting traffic between two ML model versions. Options C and D require manually building traffic-splitting logic and custom reporting dashboards. Since Vertex AI natively supports A/B testing through traffic splitting and built-in monitoring, always use the platform's native feature for the simplest setup."
+  },
+  {
+    "id": 23,
+    "topic": "Speech-to-Text API",
+    "question": "Your IT company manages a cloud-based communication platform. Audio call recordings are stored in Cloud Storage at a 16 kHz sample rate, and each recording is longer than one minute. You need to automatically transcribe these recordings into text for call summarization and sentiment analysis, following Google-recommended practices. How should you implement this?",
+    "options": {
+      "A": "Keep the 16 kHz audio and use the Speech-to-Text API with synchronous recognition to transcribe the recordings.",
+      "B": "Keep the 16 kHz audio and use the Speech-to-Text API with asynchronous recognition to transcribe the recordings.",
+      "C": "Downsample the audio to 8 kHz and use the Speech-to-Text API with synchronous recognition to transcribe the recordings.",
+      "D": "Downsample the audio to 8 kHz and use the Speech-to-Text API with asynchronous recognition to transcribe the recordings."
+    },
+    "correct": "B",
+    "analogy": "Think of this like transcribing a 2-hour lecture. Synchronous recognition is like a stenographer typing in real time — only works for sessions under 1 minute. Asynchronous recognition is like giving the recording to a transcription service and saying process this overnight and return the text. Sample rate is like audio quality: 16 kHz is clear modern voice quality, 8 kHz is old tinny telephone quality. You already have good quality — do not make it worse.",
+    "explanation": "The recordings are longer than one minute, which exceeds the hard 60-second limit of Synchronous recognition. For audio longer than one minute stored in Cloud Storage, Google requires Asynchronous (batch) recognition, which processes the file in the background and returns results when complete. The audio is already at 16 kHz — the recommended sample rate for voice recordings that delivers better speech recognition accuracy than 8 kHz. Keep the existing quality and use the correct processing method for long files.",
+    "why_not": "Option A uses Synchronous recognition on files longer than 1 minute — this will fail or cut off the audio. Synchronous recognition has a strict 60-second limit and is designed for real-time short-burst transcription. Options C and D suggest downsampling to 8 kHz, which is narrowband audio with lower fidelity. Google recommends 16 kHz or higher for better accuracy. Downsampling discards audio information and will likely reduce transcription quality. Never reduce quality when it is not necessary."
+  },
+  {
+    "id": 24,
+    "topic": "Classification Thresholds",
+    "question": "Your IT team is building a model to detect fraudulent credit card transactions. Since missing even one fraudulent case could cause serious issues, detection must be prioritized. You trained the model using AutoML, but it is failing to catch many fraudulent cases. How can you increase the number of detected fraudulent transactions?",
+    "options": {
+      "A": "Add more non-fraudulent transaction samples to the training dataset.",
+      "B": "Lower the maximum number of node hours allocated for model training.",
+      "C": "Raise the probability threshold used to classify a transaction as fraudulent.",
+      "D": "Lower the probability threshold used to classify a transaction as fraudulent."
+    },
+    "correct": "D",
+    "analogy": "Think of this like a security guard checking IDs at a club. Currently he only stops someone if he is 100% sure the ID is fake, so many fakes slip past him. The boss says it is better to occasionally stop a real customer than to let a fake ID through. The fix is to lower the bar — stop anyone who looks even slightly suspicious. He might inconvenience a few real customers but will catch almost all the fakes.",
+    "explanation": "The model outputs a probability (0 to 100%) that each transaction is fraud. With a default threshold of 50%, a transaction the model rates as 30% likely fraud gets through. By lowering the threshold to say 10%, that same 30% transaction is now flagged as fraud. This increases Recall — you catch more fraud cases. Yes, you also flag some legitimate transactions, but the question explicitly states detection must be prioritized, making this trade-off correct.",
+    "why_not": "Option C (raising the threshold) makes the model even stricter — it must be more confident before flagging anything, which means it misses even more fraud cases. This is the exact opposite of what you want. Option A (adding more non-fraudulent samples) makes the already-imbalanced dataset even more skewed toward safe transactions, further biasing the model away from detecting fraud. Option B (reducing node hours) limits training time and only makes the model less trained and therefore worse."
+  },
+  {
+    "id": 25,
+    "topic": "Experiment Tracking",
+    "question": "Your IT research team is testing multiple deep learning architectures and hyperparameter settings for an enterprise analytics project. You need a solution that can track experiments, compare multiple iterations, visualize training progress, and analyze model behavior with strong visualization capabilities. How should you build this solution?",
+    "options": {
+      "A": "Use Vertex AI TensorBoard for detailed visualization and analysis, and store experiment tracking data in BigQuery.",
+      "B": "Use Vertex AI TensorBoard to visualize training progress and model behavior, and manage experiment data with Vertex AI Feature Store.",
+      "C": "Use Vertex AI Experiments to track iterations and comparisons, and use Vertex AI TensorBoard for visualization and analysis of training metrics and model architecture.",
+      "D": "Use Vertex AI Experiments for tracking iterations and comparisons, and integrate with BigQuery and Looker Studio for visualization and reporting of training metrics and model architecture."
+    },
+    "correct": "C",
+    "analogy": "Think of this like running a science lab with hundreds of experiments. You need two things: a Lab Notebook to record exactly what you did in each run so you can compare them later (Experiment Tracking), and a Microscope and Charts to visualize what is happening inside each experiment in real time (Visualization). Vertex AI Experiments is the lab notebook and Vertex AI TensorBoard is the microscope — and Google Cloud integrates them seamlessly.",
+    "explanation": "Vertex AI Experiments is specifically built to track and compare ML experiments — it records parameters, metrics, and metadata for every training run, letting you compare results across all architectures and hyperparameter settings. Vertex AI TensorBoard is the industry-standard deep learning visualization tool — it shows loss curves, accuracy over time, weight histograms, and model architecture graphs. These two tools integrate natively in Google Cloud for a complete deep learning research workflow.",
+    "why_not": "Option B suggests Vertex AI Feature Store for experiment management — Feature Store is designed to store input data features for reuse across training and serving, not to track experiment results or hyperparameter runs. It is a data storage tool, not a logbook. Option D suggests BigQuery and Looker Studio, which are Business Intelligence tools — they cannot plot training loss curves or visualize neural network layers. TensorBoard is purpose-built for ML visualization. Option A lacks Vertex AI Experiments, using BigQuery for tracking instead, which loses native run comparison and integration features."
   }
 ]
