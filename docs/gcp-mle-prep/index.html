@@ -128,6 +128,19 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
   padding:1rem 1.2rem;font-size:1.05rem;color:rgba(220,235,245,0.82);line-height:1.7;}
 .ans-why-not{background:var(--red2);border-left:2px solid rgba(255,107,107,0.5);
   padding:1rem 1.2rem;font-size:1.05rem;color:rgba(220,235,245,0.82);line-height:1.7;}
+.why-not-toggle{display:flex;align-items:center;gap:0.7rem;cursor:pointer;
+  background:none;border:1px solid rgba(255,107,107,0.25);padding:0.6rem 1rem;
+  width:100%;text-align:left;color:rgba(255,107,107,0.8);font-family:"DM Sans",sans-serif;
+  font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;transition:all 0.3s;margin-top:0.5rem;}
+.why-not-toggle:hover{border-color:rgba(255,107,107,0.5);color:var(--red);background:rgba(255,107,107,0.05);}
+.why-not-toggle .toggle-arrow{transition:transform 0.3s;font-size:0.65rem;}
+.why-not-toggle.open .toggle-arrow{transform:rotate(90deg);}
+.why-not-body{display:none;margin-top:0.6rem;}
+.why-not-body.open{display:block;animation:slide-in 0.3s ease;}
+.ans-correct-badge{display:inline-flex;align-items:center;gap:0.5rem;
+  background:rgba(5,245,176,0.1);border:1px solid rgba(5,245,176,0.35);
+  padding:0.5rem 1.1rem;margin-bottom:1.2rem;
+  font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);}
 /* nav buttons */
 .fc-nav{display:flex;justify-content:space-between;align-items:center;
   max-width:1400px;margin:1.5rem auto 0;padding:0 4vw;}
@@ -286,6 +299,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
       <div class="fc-options" id="fc-options"></div>
       <button class="fc-reveal-btn" id="fc-reveal" onclick="revealAnswer()">&#9654; Show Answer &amp; Explanation</button>
       <div class="fc-answer" id="fc-answer">
+        <div id="ans-correct-badge" class="ans-correct-badge">&#10003; Correct Answer: <strong id="ans-correct-letter" style="font-size:0.85rem;margin-left:0.2rem;"></strong></div>
         <div class="ans-section">
           <div class="ans-label">Analogy</div>
           <div class="ans-analogy" id="ans-analogy"></div>
@@ -295,8 +309,13 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
           <p class="ans-text" id="ans-explanation"></p>
         </div>
         <div class="ans-section">
-          <div class="ans-label">Why the wrong answers fail</div>
-          <div class="ans-why-not" id="ans-why-not"></div>
+          <button class="why-not-toggle" id="why-not-toggle" onclick="toggleWhyNot()">
+            <span class="toggle-arrow">&#9654;</span>
+            Why are the other options wrong? (tap to expand)
+          </button>
+          <div class="why-not-body" id="why-not-body">
+            <div class="ans-why-not" id="ans-why-not"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -455,9 +474,22 @@ function revealAnswer(){
 }
 
 function populateAnswer(q){
+  document.getElementById('ans-correct-letter').textContent = q.correct + ' — ' + (q.options[q.correct]||'');
   document.getElementById('ans-analogy').textContent = q.analogy;
   document.getElementById('ans-explanation').textContent = q.explanation;
   document.getElementById('ans-why-not').textContent = q.why_not;
+  // collapse why-not on each new reveal
+  const toggle = document.getElementById('why-not-toggle');
+  const body = document.getElementById('why-not-body');
+  toggle.classList.remove('open');
+  body.classList.remove('open');
+}
+
+function toggleWhyNot(){
+  const toggle = document.getElementById('why-not-toggle');
+  const body = document.getElementById('why-not-body');
+  toggle.classList.toggle('open');
+  body.classList.toggle('open');
 }
 
 function navigate(dir){
