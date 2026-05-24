@@ -1215,6 +1215,111 @@
     "why_not": "Option A ('Other Products You May Like') optimizes for click-through rate, not revenue. Higher clicks don't automatically translate to larger purchases or increased transaction value — a customer can click many recommendations without buying any of them. Option C reverses the required import order: Google's Recommendations AI best practice is to import the product catalog first, then user events, so that event records reference valid product IDs. Doing it backwards causes data quality issues and degrades the event stream. Option D directly violates data quality requirements: placeholder catalog values produce irrelevant and meaningless recommendations, degrade model training signals, and waste deployment resources — always start with accurate and complete product data."
   },
   {
+    "id": 88,
+    "topic": "Fixing Overfitting with Hyperparameter Search",
+    "question": "You have trained a deep neural network model on Google Cloud. The model has low loss on the training data, but is performing worse on the validation data. You want the model to be resilient to overfitting.\n\nWhich strategy should you use when retraining the model?",
+    "options": {
+      "A": "Apply a dropout parameter of 0.2, and decrease the learning rate by a factor of 10.",
+      "B": "Apply a L2 regularization parameter of 0.4, and decrease the learning rate by a factor of 10.",
+      "C": "Run a hyperparameter tuning job on AI Platform to optimize for the L2 regularization and dropout parameters.",
+      "D": "Run a hyperparameter tuning job on AI Platform to optimize for the learning rate, and increase the number of neurons by a factor of 2."
+    },
+    "correct": "C",
+    "analogy": "Think of this like a student who has memorized the practice test perfectly (low training loss) but fails the real exam (high validation loss) — they are 'overfitting.' Instead of just guessing 'study 20% less' (Option A) or 'review 40% harder' (Option B), you hire a tutor who systematically tests different study strategies to find the exact balance that helps the student understand the material generally, rather than just memorizing answers. The AI Platform hyperparameter tuning job is that automated tutor.",
+    "explanation": "The symptoms — low training loss but poor validation performance — are the textbook definition of overfitting. The model has memorized noise in the training data instead of learning generalizable patterns. The correct techniques to combat this are Dropout (randomly deactivating neurons during training to prevent co-adaptation) and L2 regularization (penalizing large weights to keep the model simpler). While both are correct tools, manually picking arbitrary values like 0.2 or 0.4 is a shot in the dark. Option C uses AI Platform's managed hyperparameter tuning service to automatically search the parameter space and find the optimal combination that minimizes validation loss — removing guesswork and guaranteeing the best configuration.",
+    "why_not": "Options A and B suggest manually applying specific values like 0.2 or 0.4. These are arbitrary guesses — there is no guarantee that those exact values are optimal for your model and dataset. The model might still overfit with too-small regularization or underfit with too-large values. Option D makes the problem dramatically worse: increasing the number of neurons by a factor of 2 increases the model's capacity and complexity, giving it even more parameters to memorize training noise. A more complex model almost always worsens overfitting — this is the exact opposite of the right direction."
+  },
+  {
+    "id": 89,
+    "topic": "Concept Drift and Model Retraining",
+    "question": "You built and manage a production system that is responsible for predicting sales numbers. Model accuracy is crucial, because the production model is required to keep up with market changes. Since being deployed to production, the model hasn't changed; however the accuracy of the model has steadily deteriorated.\n\nWhat issue is most likely causing the steady decline in model accuracy?",
+    "options": {
+      "A": "Poor data quality",
+      "B": "Lack of model retraining",
+      "C": "Too few layers in the model for capturing information",
+      "D": "Incorrect data split ratio during model training, evaluation, validation, and test"
+    },
+    "correct": "B",
+    "analogy": "Think of this like a weather forecaster who learned to predict rain by studying last year's almanac. At first, their predictions are decent. But as seasons shift, new climate patterns emerge, and storm routes change, the old knowledge becomes outdated. They are not making mistakes on purpose — the world just changed around them. To stay accurate, they need to study this year's weather data, not rely on patterns from 12 months ago. That's exactly what model retraining does.",
+    "explanation": "Sales forecasting operates in a dynamic environment: consumer behavior shifts, competitors launch promotions, economic conditions fluctuate, and seasonal trends evolve continuously. This phenomenon is called concept drift — the statistical relationship between input features and the target variable changes over time. Since the model has not been updated since deployment, it is making predictions based on outdated patterns. Regular retraining on fresh data allows the model to adapt to current market realities, directly addressing the steady, time-dependent accuracy decline described.",
+    "why_not": "Option A (poor data quality) would typically cause inconsistent or bad performance from the very first day of deployment — not a gradual, steady decline that appears after an initial period of stable accuracy. Option C (too few layers) is an architectural flaw that manifests during initial training and validation as underfitting — it would be visible before deployment, not emerge gradually afterward. Option D (incorrect data split) is a methodological error made during development that affects how model performance is evaluated — it does not explain why a deployed, frozen model's accuracy declines progressively over time in production."
+  },
+  {
+    "id": 90,
+    "topic": "Out-of-Memory Input Pipeline with TFRecords",
+    "question": "You have been asked to develop an input pipeline for an ML training model that processes images from disparate sources at low latency. You discover that your input data does not fit in memory.\n\nHow should you create a dataset following Google-recommended best practices?",
+    "options": {
+      "A": "Create a tf.data.Dataset.prefetch transformation.",
+      "B": "Convert the images to tf.Tensor objects, and then run Dataset.from_tensor_slices().",
+      "C": "Convert the images to tf.Tensor objects, and then run tf.data.Dataset.from_tensors().",
+      "D": "Convert the images into TFRecords, store the images in Cloud Storage, and then use the tf.data API to read the images for training."
+    },
+    "correct": "D",
+    "analogy": "Think of this like streaming a 4K movie to your TV. You don't download the entire 50 GB file to your phone's storage first — that's like loading everything into memory. Instead, the movie is stored on a massive server (Cloud Storage), packaged in an efficient streaming format (TFRecords), and your TV (tf.data API) requests just the next scene while you're watching the current one. Smooth playback, zero storage stress, and instant start — that's how you handle data bigger than your device.",
+    "explanation": "When training data exceeds available memory, Google's best practice is a three-step architecture: first, serialize images into TFRecords — a binary format optimized for sequential I/O and efficient TensorFlow parsing; second, store them in Cloud Storage for scalable, low-latency, distributed access; third, use the tf.data API to stream, prefetch, parallelize, and batch data directly from Cloud Storage during training. This decouples storage from compute, enables distributed training across multiple workers, supports intelligent prefetching to hide I/O latency, and never loads the full dataset into RAM.",
+    "why_not": "Option A (prefetch only) is a useful optimization technique, but it assumes data is already accessible via an existing dataset — it does not solve the fundamental problem that the data cannot fit into memory in the first place. Option B (from_tensor_slices) requires converting all images to tf.Tensor objects in memory first, which directly violates the out-of-memory constraint and will immediately crash with OOM errors. Option C (from_tensors) has the same memory loading problem as Option B, plus it creates a dataset with a single monolithic element containing all data at once — incompatible with standard training loops that expect individual samples and batches."
+  },
+  {
+    "id": 91,
+    "topic": "Time-Series Inventory Prediction with RNN",
+    "question": "You are an ML engineer at a large grocery retailer with stores in multiple regions. You have been asked to create an inventory prediction model. Your model's features include region, location, historical demand, and seasonal popularity. You want the algorithm to learn from new inventory data on a daily basis.\n\nWhich algorithm should you use to build the model?",
+    "options": {
+      "A": "Classification",
+      "B": "Reinforcement Learning",
+      "C": "Recurrent Neural Networks (RNN)",
+      "D": "Convolutional Neural Networks (CNN)"
+    },
+    "correct": "C",
+    "analogy": "Think of this like predicting how many loaves of bread a bakery will sell tomorrow. You don't just look at today's sales in isolation — you remember that last Tuesday was rainy (low sales), the week before had a holiday (high sales), and every Friday evening has a rush at 5 PM. An RNN is like a baker with excellent memory: it remembers patterns across time, learns from each new day's results, and adjusts tomorrow's bake count based on that accumulated temporal knowledge. It is built for sequences, not isolated snapshots.",
+    "explanation": "Inventory prediction is a time-series forecasting problem: demand depends on historical patterns, seasonal trends, and recent events unfolding over time. Recurrent Neural Networks — especially LSTM and GRU variants — are specifically designed to model sequential data and capture temporal dependencies across arbitrary time windows. They can ingest daily inventory updates, retain learned patterns from months of history, and continuously adapt predictions as new data arrives — directly satisfying the requirement to 'learn from new inventory data on a daily basis' while accounting for region, location, and seasonality features.",
+    "why_not": "Option A (Classification) predicts discrete categories such as 'high demand' or 'low demand,' not the continuous inventory quantities needed for precise stocking and procurement decisions. Option B (Reinforcement Learning) is designed for sequential decision-making with reward signals — for example, 'what order quantity maximizes long-term profit?' — not for forecasting demand values from historical time-series data. Option D (CNN) excels at detecting spatial patterns in image data or grid-like structures. While 1D CNNs can process time-series, they lack the explicit memory mechanism of RNNs and struggle to model long-term temporal dependencies that span weeks or months of inventory history."
+  },
+  {
+    "id": 92,
+    "topic": "PII Protection with DLP Quarantine Pattern",
+    "question": "You are building a real-time prediction engine that streams files which may contain Personally Identifiable Information (PII) to Google Cloud. You want to use the Cloud Data Loss Prevention (DLP) API to scan the files.\n\nHow should you ensure that the PII is not accessible by unauthorized individuals?",
+    "options": {
+      "A": "Stream all files to Google Cloud, and then write the data to BigQuery. Periodically conduct a bulk scan of the table using the DLP API.",
+      "B": "Stream all files to Google Cloud, and write batches of the data to BigQuery. While the data is being written to BigQuery, conduct a bulk scan of the data using the DLP API.",
+      "C": "Create two buckets of data: Sensitive and Non-sensitive. Write all data to the Non-sensitive bucket. Periodically conduct a bulk scan of that bucket using the DLP API, and move the sensitive data to the Sensitive bucket.",
+      "D": "Create three buckets of data: Quarantine, Sensitive, and Non-sensitive. Write all data to the Quarantine bucket. Periodically conduct a bulk scan of that bucket using the DLP API, and move the data to either the Sensitive or Non-Sensitive bucket."
+    },
+    "correct": "D",
+    "analogy": "Think of this like airport security screening for luggage. You don't let bags go straight to the baggage claim or the 'approved luggage' area before checking them. Instead, every bag first goes into a locked quarantine zone. Security scans each bag there. Only after clearance does the bag move to either the 'special handling' area (Sensitive bucket) or the regular claim area (Non-sensitive bucket). No bag reaches passengers until it has been properly screened — that's the guarantee.",
+    "explanation": "Option D implements the security principle of 'inspect before granting access.' By routing all incoming files to a restricted Quarantine bucket first, you ensure no unauthorized user can ever access unscanned data. The Cloud DLP API scans the quarantined files for PII. Based on the scan results, files are programmatically moved to either the Sensitive bucket (with strict IAM controls limiting access to authorized personnel only) or the Non-sensitive bucket (with standard access). This workflow guarantees PII is never exposed to unauthorized individuals before it is detected and classified.",
+    "why_not": "Option A writes data to BigQuery before scanning, creating a window during which PII is fully queryable by anyone with BigQuery table access — a critical and unacceptable security gap. Option B attempts to scan 'while writing,' but BigQuery makes data available for querying as soon as rows are loaded, so PII could be accessed and read by users before the DLP scan has a chance to complete. Option C writes all data directly to the 'Non-sensitive' bucket first, meaning PII temporarily resides in a location with relaxed access controls — violating the core requirement to prevent unauthorized access from the very moment of data ingestion."
+  },
+  {
+    "id": 93,
+    "topic": "AutoML Tables Time Column for LTV Forecasting",
+    "question": "You work for a large hotel chain and have been asked to assist the marketing team in gathering predictions for a targeted marketing strategy. You need to make predictions about user lifetime value (LTV) over the next 20 days so that marketing can be adjusted accordingly. The customer dataset is in BigQuery, and you are preparing the tabular data for training with AutoML Tables. This data has a time signal that is spread across multiple columns.\n\nHow should you ensure that AutoML fits the best model to your data?",
+    "options": {
+      "A": "Manually combine all columns that contain a time signal into an array. Allow AutoML to interpret this array appropriately. Choose an automatic data split across the training, validation, and testing sets.",
+      "B": "Submit the data for training without performing any manual transformations. Allow AutoML to handle the appropriate transformations. Choose an automatic data split across the training, validation, and testing sets.",
+      "C": "Submit the data for training without performing any manual transformations, and indicate an appropriate column as the Time column. Allow AutoML to split your data based on the time signal provided, and reserve the more recent data for the validation and testing sets.",
+      "D": "Submit the data for training without performing any manual transformations. Use the columns that have a time signal to manually split your data. Ensure that the data in your validation set is from 30 days after the data in your training set and that the data in your testing set is from 30 days after your validation set."
+    },
+    "correct": "C",
+    "analogy": "Think of this like teaching a student to predict next month's exam scores using past report cards. You wouldn't shuffle all the report cards randomly and let the student study future exams to predict the past — that's data leakage. Instead, you clearly mark the 'date' on each report card, then say: 'Study everything from January through June, test yourself on July and August, and save September for the final exam.' AutoML's Time column feature does exactly that — it respects chronological order so the model learns from the past to predict the future.",
+    "explanation": "Predicting LTV over a future 20-day window is a time-series forecasting task where chronological order matters critically. AutoML Tables provides native support for temporal data via the Time column setting. When you designate an appropriate column as the Time column, AutoML automatically performs time-aware feature engineering, splits data chronologically (oldest data → training, recent data → validation, most recent → testing) to prevent future data leakage into training, and reserves the most recent data for evaluation — precisely simulating how the model will be used in production to predict forward in time.",
+    "why_not": "Option A manually combines time columns into an array, but AutoML Tables does not automatically interpret arrays as temporal signals. Combined with random splitting, this approach causes data leakage where future information flows into the training set, producing unrealistically optimistic evaluation metrics. Option B submits data without a Time column, so AutoML treats all rows as independent and uses random splitting — severe data leakage in a time-sensitive forecasting problem, invalidating all evaluation metrics. Option D suggests manually enforcing 30-day gaps between splits, which is error-prone, arbitrary, and unnecessary when AutoML provides built-in chronological splitting. The 30-day gaps also misalign with the 20-day prediction horizon and unnecessarily waste recent training data."
+  },
+  {
+    "id": 94,
+    "topic": "Reducing LSTM Training Time with Scale Tier",
+    "question": "You are training an LSTM-based model on AI Platform to summarize text. You want to ensure that training time is minimized without significantly compromising the accuracy of your model.\n\nWhat should you do?",
+    "options": {
+      "A": "Modify the 'epochs' parameter.",
+      "B": "Modify the 'scale-tier' parameter.",
+      "C": "Modify the 'batch size' parameter.",
+      "D": "Modify the 'learning rate' parameter."
+    },
+    "correct": "B",
+    "analogy": "Think of this like baking a cake that requires 2 hours in the oven. You can't reduce the baking time (epochs) without ending up with a raw, undercooked cake (poor accuracy). You can't change the recipe proportions (batch size or learning rate) without affecting the taste. But you CAN upgrade from a small home oven to a professional convection oven — same recipe, same required bake time, but it finishes faster because the hardware is more powerful. That's exactly what upgrading the scale-tier does.",
+    "explanation": "The --scale-tier parameter controls the hardware resources allocated to your AI Platform training job. The default 'basic' tier allocates minimal compute (a single CPU instance). By upgrading to a higher tier such as 'standard-1', 'premium-1', or a custom tier with GPUs or TPUs, you provision more powerful hardware that processes the same training workload significantly faster. This directly reduces wall-clock training time without altering the model architecture, the number of epochs, or any hyperparameters — meaning the model learns the same patterns on the same data, just in less time.",
+    "why_not": "Option A (reducing epochs) would directly reduce training time but also causes underfitting — the model stops learning before it has had enough iterations to converge, significantly compromising accuracy. Option C (increasing batch size) can speed up the computation per epoch, but very large batches tend to lead to poorer generalization and lower final accuracy, as the model converges to sharp minima that don't transfer well to unseen data. Option D (modifying learning rate) affects how the model converges, not the raw speed of computation — a higher learning rate may cause divergence or instability, while a lower one slows convergence, neither solving the hardware-bound training time problem."
+  },
+  {
     "id": 87,
     "topic": "Serverless ML Enrichment Pipeline for Support Tickets",
     "question": "You are designing an architecture with a serverless ML system to enrich customer support tickets with informative metadata before they are routed to a support agent. You need a set of models to predict ticket priority, predict ticket resolution time, and perform sentiment analysis to help agents make strategic decisions when they process support requests. Tickets are not expected to have any domain-specific terms or jargon.\n\nWhich endpoints should the Enrichment Cloud Functions call?\n\nA. 1=AI Platform, 2=AI Platform, 3=AutoML Vision\nB. 1=AI Platform, 2=AI Platform, 3=AutoML Natural Language\nC. 1=AI Platform, 2=AI Platform, 3=Cloud Natural Language API\nD. 1=Cloud Natural Language API, 2=AI Platform, 3=Cloud Vision API",
