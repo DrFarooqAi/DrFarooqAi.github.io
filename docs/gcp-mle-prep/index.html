@@ -137,6 +137,10 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .why-not-toggle.open .toggle-arrow{transform:rotate(90deg);}
 .why-not-body{display:none;margin-top:0.6rem;}
 .why-not-body.open{display:block;animation:slide-in 0.3s ease;}
+/* keyword highlights */
+.fc-question strong,.opt-text strong,.ans-analogy strong,.ans-text strong,
+.ans-why-not strong,.exam-q-text strong,.eopt-txt strong,.eq-ans-text strong{
+  color:var(--cyan);font-weight:600;font-style:normal;}
 .ans-correct-badge{display:inline-flex;align-items:center;gap:0.5rem;
   background:rgba(5,245,176,0.1);border:1px solid rgba(5,245,176,0.35);
   padding:0.5rem 1.1rem;margin-bottom:1.2rem;
@@ -412,6 +416,37 @@ async function loadQuestions(){
   renderStudyCard();
 }
 
+/* ════════ KEYWORD HIGHLIGHT ════════ */
+function highlight(text){
+  if(!text) return '';
+  const kws = [
+    'Vertex AI Managed Datasets','Vertex AI Model Monitoring','Vertex AI TensorBoard',
+    'Vertex AI Feature Store','Vertex AI Experiments','Vertex AI Pipelines',
+    'Vertex AI Workbench','Vertex AI Training','Vertex AI',
+    'Google Kubernetes Engine','TensorFlow Extended','Kubeflow Pipelines',
+    'training-serving skew','hyperparameter tuning','dynamic range quantization',
+    'time series forecasting','data augmentation','feature engineering',
+    'image segmentation','object detection','image classification','template matching',
+    'Bayesian optimization','Bayesian Optimization','feature crossing',
+    'schema anomalies','data validation','model monitoring','model retraining',
+    'embedding dimension','learning rate','feature skew','data drift',
+    'Cloud Storage','Cloud Composer','Cloud Scheduler','Cloud Functions',
+    'Cloud Run','Cloud Tasks','Looker Studio','Data Catalog',
+    'Vertex ML Metadata','BigQuery ML','BigQuery',
+    'TFRecords','TFRecord','TFDV','TFMA','TFX','TensorFlow',
+    'tf.data','Keras','PyTorch','Scikit-learn',
+    'Kubeflow','Apache Beam','Apache Spark','Apache Airflow',
+    'Dataflow','Dataproc','Pub/Sub','GKE',
+    'UNIT_LOG_SCALE','UNIT_LINEAR_SCALE','TFServing',
+    'preemptible','checkpointing','prefetching','parallelization',
+    'quantization','distillation','pruning','overfitting','underfitting',
+    'hyperparameter','time series','TPU','GPU',
+    'cold start',
+  ];
+  const pat = kws.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+  return text.replace(new RegExp('('+pat+')','gi'),'<strong>$1</strong>');
+}
+
 /* ════════════════════════════ STUDY MODE ════════════ */
 function renderStudyCard(){
   if(!QUESTIONS.length) return;
@@ -421,7 +456,7 @@ function renderStudyCard(){
 
   document.getElementById('fc-qnum').textContent = 'Q ' + q.id;
   document.getElementById('fc-topic').textContent = q.topic;
-  document.getElementById('fc-question').textContent = q.question;
+  document.getElementById('fc-question').innerHTML = highlight(q.question);
   document.getElementById('prog-count').textContent = (studyIdx+1) + ' / ' + total;
   document.getElementById('prog-fill').style.width = pct + '%';
 
@@ -436,7 +471,7 @@ function renderStudyCard(){
       if(k === q.correct) div.classList.add('correct');
       else if(k === answered) div.classList.add('wrong');
     }
-    div.innerHTML = `<span class="opt-key">${k}</span><span class="opt-text">${v}</span><span class="opt-badge">${k===q.correct?'✓ Correct':'✗ Wrong'}</span>`;
+    div.innerHTML = `<span class="opt-key">${k}</span><span class="opt-text">${highlight(v)}</span><span class="opt-badge">${k===q.correct?'✓ Correct':'✗ Wrong'}</span>`;
     if(!answered) div.onclick = () => selectStudyOption(k, q.correct);
     optsEl.appendChild(div);
   });
@@ -474,10 +509,10 @@ function revealAnswer(){
 }
 
 function populateAnswer(q){
-  document.getElementById('ans-correct-letter').textContent = q.correct + ' — ' + (q.options[q.correct]||'');
-  document.getElementById('ans-analogy').textContent = q.analogy;
-  document.getElementById('ans-explanation').textContent = q.explanation;
-  document.getElementById('ans-why-not').textContent = q.why_not;
+  document.getElementById('ans-correct-letter').textContent = q.correct;
+  document.getElementById('ans-analogy').innerHTML = highlight(q.analogy);
+  document.getElementById('ans-explanation').innerHTML = highlight(q.explanation);
+  document.getElementById('ans-why-not').innerHTML = highlight(q.why_not);
   // collapse why-not on each new reveal
   const toggle = document.getElementById('why-not-toggle');
   const body = document.getElementById('why-not-body');
@@ -530,11 +565,11 @@ function renderExamQuestions(){
         <span class="exam-q-num">Q ${q.id}</span>
         <span class="exam-q-topic">${q.topic}</span>
       </div>
-      <p class="exam-q-text">${q.question}</p>
+      <p class="exam-q-text">${highlight(q.question)}</p>
       <div class="exam-opts" id="eopts-${qi}"></div>
       <div class="exam-q-answer" id="eq-ans-${qi}">
         <div class="eq-ans-label">Explanation</div>
-        <p class="eq-ans-text">${q.explanation}</p>
+        <p class="eq-ans-text">${highlight(q.explanation)}</p>
       </div>`;
     el.appendChild(div);
     // render opts
@@ -543,7 +578,7 @@ function renderExamQuestions(){
       const o=document.createElement('div');
       o.className='exam-opt'+(examAnswers[qi]===k?' sel':'');
       o.id='eopt-'+qi+'-'+k;
-      o.innerHTML=`<span class="eopt-key">${k}</span><span class="eopt-txt">${v}</span>`;
+      o.innerHTML=`<span class="eopt-key">${k}</span><span class="eopt-txt">${highlight(v)}</span>`;
       o.onclick=()=>selectExamOption(qi,k);
       optsEl.appendChild(o);
     });
@@ -628,7 +663,7 @@ function renderReview(){
         <span class="exam-q-num">Q ${q.id}</span>
         <span class="exam-q-topic" style="background:${isCorrect?'rgba(5,245,176,0.12)':'rgba(255,107,107,0.12)'};color:${isCorrect?'var(--green)':'var(--red)'}">${isCorrect?'✓ Correct':'✗ Wrong'}</span>
       </div>
-      <p class="exam-q-text">${q.question}</p>`;
+      <p class="exam-q-text">${highlight(q.question)}</p>`;
     const optsEl=document.createElement('div');
     optsEl.className='exam-opts';
     Object.entries(q.options).forEach(([k,v])=>{
@@ -636,7 +671,7 @@ function renderReview(){
       o.className='exam-opt disabled';
       if(k===q.correct) o.classList.add('correct-res');
       else if(k===chosen) o.classList.add('wrong-res');
-      o.innerHTML=`<span class="eopt-key">${k}</span><span class="eopt-txt">${v}</span>`;
+      o.innerHTML=`<span class="eopt-key">${k}</span><span class="eopt-txt">${highlight(v)}</span>`;
       optsEl.appendChild(o);
     });
     div.appendChild(optsEl);
