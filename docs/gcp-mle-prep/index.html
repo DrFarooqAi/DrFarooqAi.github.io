@@ -459,6 +459,9 @@ function highlight(text){
     'preemptible','checkpointing','prefetching','parallelization',
     'quantization','distillation','pruning','overfitting','underfitting',
     'hyperparameter','time series','TPU','GPU',
+    'tf.distribute.Strategy','Format Preserving Encryption','Cloud Data Loss Prevention',
+    'class imbalance','one-hot encoding','oversampling','loss function','F1 score',
+    'false positives','false negatives','minority class',
     'cold start',
   ];
   const pat = kws.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
@@ -486,10 +489,10 @@ function renderStudyCard(){
     const div = document.createElement('div');
     div.className = 'fc-option' + (answered ? ' disabled' : '');
     if(answered){
-      if(k === q.correct) div.classList.add('correct');
+      if(q.correct.includes(k)) div.classList.add('correct');
       else if(k === answered) div.classList.add('wrong');
     }
-    div.innerHTML = `<span class="opt-key">${k}</span><span class="opt-text">${highlight(v)}</span><span class="opt-badge">${k===q.correct?'✓ Correct':'✗ Wrong'}</span>`;
+    div.innerHTML = `<span class="opt-key">${k}</span><span class="opt-text">${highlight(v)}</span><span class="opt-badge">${q.correct.includes(k)?'✓ Correct':'✗ Wrong'}</span>`;
     if(!answered) div.onclick = () => selectStudyOption(k, q.correct);
     optsEl.appendChild(div);
   });
@@ -527,7 +530,7 @@ function revealAnswer(){
 }
 
 function populateAnswer(q){
-  document.getElementById('ans-correct-letter').textContent = q.correct;
+  document.getElementById('ans-correct-letter').textContent = q.correct.length > 1 ? q.correct.split('').join(' & ') : q.correct;
   document.getElementById('ans-analogy').innerHTML = highlight(q.analogy);
   document.getElementById('ans-explanation').innerHTML = highlight(q.explanation);
   document.getElementById('ans-why-not').innerHTML = highlight(q.why_not);
@@ -644,7 +647,7 @@ function submitExam(){
   // calculate score
   let correct=0;
   QUESTIONS.forEach((q,qi)=>{
-    if(examAnswers[qi]===q.correct) correct++;
+    if(q.correct.includes(examAnswers[qi])) correct++;
   });
   const pct=Math.round((correct/QUESTIONS.length)*100);
   // show results
@@ -670,7 +673,7 @@ function renderReview(){
   el.innerHTML='';
   QUESTIONS.forEach((q,qi)=>{
     const chosen=examAnswers[qi];
-    const isCorrect=chosen===q.correct;
+    const isCorrect=q.correct.includes(chosen);
     const div=document.createElement('div');
     div.className='exam-q';
     div.style.marginBottom='1.2rem';
