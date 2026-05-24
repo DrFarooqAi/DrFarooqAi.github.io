@@ -45,7 +45,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .nav-back:hover{border-color:var(--cyan);color:var(--cyan);}
 
 /* HERO */
-.hero{position:relative;z-index:1;padding:4rem 4vw 3rem;max-width:1100px;margin:0 auto;text-align:center;}
+.hero{position:relative;z-index:1;padding:4rem 4vw 3rem;max-width:1400px;margin:0 auto;text-align:center;}
 .hero-badge{display:inline-flex;align-items:center;gap:0.5rem;padding:0.35rem 1rem;
   border:1px solid var(--border2);background:var(--gold2);margin-bottom:1.5rem;}
 .hero-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:blink 2s ease-in-out infinite;}
@@ -70,7 +70,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 /* STUDY MODE */
 #study-mode{position:relative;z-index:1;}
 /* progress bar */
-.progress-wrap{max-width:900px;margin:0 auto 2.5rem;padding:0 4vw;}
+.progress-wrap{max-width:1400px;margin:0 auto 2.5rem;padding:0 4vw;}
 .progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;}
 .progress-label{font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);}
 .progress-count{font-family:var(--mono);font-size:0.8rem;color:var(--cyan);}
@@ -79,7 +79,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
   transition:width 0.5s ease;box-shadow:0 0 8px rgba(5,245,233,0.4);}
 
 /* FLASHCARD */
-.flashcard-wrap{max-width:900px;margin:0 auto;padding:0 4vw;}
+.flashcard-wrap{max-width:1400px;margin:0 auto;padding:0 4vw;}
 .flashcard{background:var(--glass);border:1px solid rgba(5,245,233,0.1);padding:2.5rem;
   position:relative;overflow:hidden;transition:border-color 0.3s;}
 .flashcard::before{content:"";position:absolute;top:0;left:0;width:3px;height:100%;
@@ -130,7 +130,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
   padding:1rem 1.2rem;font-size:0.88rem;color:rgba(220,235,245,0.82);line-height:1.7;}
 /* nav buttons */
 .fc-nav{display:flex;justify-content:space-between;align-items:center;
-  max-width:900px;margin:1.5rem auto 0;padding:0 4vw;}
+  max-width:1400px;margin:1.5rem auto 0;padding:0 4vw;}
 .fc-nav-btn{padding:0.7rem 1.8rem;border:1px solid rgba(5,245,233,0.2);
   background:transparent;color:var(--muted);font-family:"DM Sans",sans-serif;
   font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;}
@@ -145,7 +145,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 
 /* ── EXAM MODE ── */
 #exam-mode{display:none;position:relative;z-index:1;}
-.exam-header{max-width:1000px;margin:0 auto 2.5rem;padding:0 4vw;
+.exam-header{max-width:1400px;margin:0 auto 2.5rem;padding:0 4vw;
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
 .exam-stats{display:flex;gap:2rem;}
 .exam-stat{text-align:center;}
@@ -155,7 +155,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .timer.warning{color:var(--red);animation:pulse-timer 1s ease-in-out infinite;}
 @keyframes pulse-timer{0%,100%{opacity:1;}50%{opacity:0.5;}}
 .timer-label{font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--dimmed);text-align:center;display:block;margin-top:2px;}
-.exam-start-wrap{max-width:700px;margin:0 auto;padding:0 4vw;text-align:center;}
+.exam-start-wrap{max-width:900px;margin:0 auto;padding:0 4vw;text-align:center;}
 .exam-start-card{background:var(--glass);border:1px solid var(--border);padding:3rem;margin-bottom:2rem;}
 .exam-start-h2{font-family:"Cormorant Garamond",serif;font-size:2rem;font-weight:300;color:var(--white);margin-bottom:1rem;}
 .exam-start-info{font-size:0.9rem;color:var(--muted);line-height:1.8;margin-bottom:2rem;}
@@ -168,7 +168,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
   letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-weight:500;transition:all 0.3s;}
 .start-btn:hover{box-shadow:0 6px 24px rgba(5,245,233,0.3);transform:translateY(-1px);}
 /* exam questions list */
-.exam-questions{max-width:1000px;margin:0 auto;padding:0 4vw;display:none;}
+.exam-questions{max-width:1400px;margin:0 auto;padding:0 4vw;display:none;}
 .exam-q{background:var(--glass);border:1px solid rgba(5,245,233,0.08);
   padding:2rem;margin-bottom:1.5rem;position:relative;transition:border-color 0.3s;}
 .exam-q.answered{border-color:rgba(5,245,233,0.2);}
@@ -196,13 +196,13 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .eq-ans-label{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;}
 .eq-ans-text{font-size:0.85rem;color:rgba(220,235,245,0.82);line-height:1.7;}
 /* submit */
-.exam-submit-wrap{max-width:1000px;margin:2rem auto;padding:0 4vw;text-align:center;}
+.exam-submit-wrap{max-width:1400px;margin:2rem auto;padding:0 4vw;text-align:center;}
 .exam-submit-btn{padding:1rem 3rem;background:linear-gradient(135deg,#0a7e6e,#05f5e9);
   color:var(--navy);border:none;font-family:"DM Sans",sans-serif;font-size:0.88rem;
   letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-weight:500;transition:all 0.3s;}
 .exam-submit-btn:hover{box-shadow:0 6px 24px rgba(5,245,233,0.3);}
 /* results */
-.exam-results{display:none;max-width:900px;margin:0 auto;padding:0 4vw;}
+.exam-results{display:none;max-width:1400px;margin:0 auto;padding:0 4vw;}
 .results-card{background:var(--glass);border:1px solid var(--border);padding:3rem;text-align:center;margin-bottom:2rem;}
 .results-score{font-family:"Cormorant Garamond",serif;font-size:5rem;font-weight:300;
   color:var(--cyan);display:block;line-height:1;text-shadow:0 0 40px rgba(5,245,233,0.3);}
@@ -221,7 +221,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
   letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;margin:0 0.5rem;}
 .retry-btn:hover{background:var(--cyan2);}
 /* answer review list after submit */
-.review-list{max-width:1000px;margin:0 auto;padding:0 4vw;}
+.review-list{max-width:1400px;margin:0 auto;padding:0 4vw;}
 
 /* FOOTER */
 .page-footer{position:relative;z-index:1;border-top:1px solid rgba(5,245,233,0.08);
