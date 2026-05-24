@@ -21,7 +21,7 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{background:var(--navy);color:var(--white);font-family:"DM Sans",sans-serif;font-weight:300;line-height:1.7;min-height:100vh;overflow-x:hidden;}
-::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar{width:22px;}
 ::-webkit-scrollbar-track{background:var(--navy);}
 ::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:2px;}
 
@@ -88,7 +88,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .fc-qnum{font-family:var(--mono);font-size:0.72rem;color:var(--cyan);letter-spacing:0.1em;}
 .fc-topic{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;
   padding:0.25rem 0.7rem;background:var(--cyan2);color:var(--cyan);border:1px solid rgba(5,245,233,0.2);}
-.fc-question{font-family:"Cormorant Garamond",serif;font-size:1.35rem;font-weight:400;
+.fc-question{font-family:"Cormorant Garamond",serif;font-size:1.65rem;font-weight:400;
   color:var(--white);line-height:1.55;margin-bottom:2rem;}
 /* options */
 .fc-options{display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2rem;}
@@ -103,7 +103,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
   min-width:22px;flex-shrink:0;margin-top:1px;}
 .fc-option.correct .opt-key{color:var(--green);}
 .fc-option.wrong .opt-key{color:var(--red);}
-.opt-text{font-size:0.92rem;color:rgba(220,235,245,0.88);line-height:1.55;}
+.opt-text{font-size:1.08rem;color:rgba(220,235,245,0.88);line-height:1.55;}
 .opt-badge{margin-left:auto;font-size:0.7rem;padding:0.15rem 0.6rem;flex-shrink:0;
   font-family:var(--mono);display:none;}
 .fc-option.correct .opt-badge{display:block;background:var(--green2);color:var(--green);}
@@ -123,11 +123,11 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .ans-label{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;
   color:var(--gold);margin-bottom:0.6rem;display:flex;align-items:center;gap:0.5rem;}
 .ans-label::after{content:"";flex:1;height:1px;background:linear-gradient(to right,rgba(232,201,122,0.2),transparent);}
-.ans-text{font-size:0.9rem;color:rgba(220,235,245,0.88);line-height:1.75;}
+.ans-text{font-size:1.05rem;color:rgba(220,235,245,0.88);line-height:1.75;}
 .ans-analogy{background:rgba(232,201,122,0.04);border-left:2px solid var(--gold);
-  padding:1rem 1.2rem;font-size:0.88rem;color:rgba(220,235,245,0.82);line-height:1.7;}
+  padding:1rem 1.2rem;font-size:1.05rem;color:rgba(220,235,245,0.82);line-height:1.7;}
 .ans-why-not{background:var(--red2);border-left:2px solid rgba(255,107,107,0.5);
-  padding:1rem 1.2rem;font-size:0.88rem;color:rgba(220,235,245,0.82);line-height:1.7;}
+  padding:1rem 1.2rem;font-size:1.05rem;color:rgba(220,235,245,0.82);line-height:1.7;}
 /* nav buttons */
 .fc-nav{display:flex;justify-content:space-between;align-items:center;
   max-width:1400px;margin:1.5rem auto 0;padding:0 4vw;}
@@ -176,7 +176,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .exam-q-num{font-family:var(--mono);font-size:0.7rem;color:var(--cyan);letter-spacing:0.1em;}
 .exam-q-topic{font-size:0.62rem;letter-spacing:0.13em;text-transform:uppercase;
   padding:0.2rem 0.6rem;background:var(--cyan2);color:var(--cyan);}
-.exam-q-text{font-family:"Cormorant Garamond",serif;font-size:1.2rem;font-weight:400;
+.exam-q-text{font-family:"Cormorant Garamond",serif;font-size:1.5rem;font-weight:400;
   color:var(--white);line-height:1.55;margin-bottom:1.5rem;}
 .exam-opts{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;}
 .exam-opt{display:flex;align-items:flex-start;gap:0.8rem;padding:0.75rem 0.9rem;
@@ -189,12 +189,12 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .eopt-key{font-family:var(--mono);font-size:0.75rem;font-weight:500;color:var(--cyan);min-width:18px;flex-shrink:0;margin-top:2px;}
 .exam-opt.correct-res .eopt-key{color:var(--green);}
 .exam-opt.wrong-res .eopt-key{color:var(--red);}
-.eopt-txt{font-size:0.86rem;color:rgba(220,235,245,0.85);line-height:1.5;}
+.eopt-txt{font-size:1.05rem;color:rgba(220,235,245,0.85);line-height:1.5;}
 /* exam answer reveal */
 .exam-q-answer{display:none;margin-top:1.2rem;border-top:1px solid rgba(5,245,233,0.08);padding-top:1.2rem;}
 .exam-q-answer.show{display:block;}
 .eq-ans-label{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;}
-.eq-ans-text{font-size:0.85rem;color:rgba(220,235,245,0.82);line-height:1.7;}
+.eq-ans-text{font-size:1.05rem;color:rgba(220,235,245,0.82);line-height:1.7;}
 /* submit */
 .exam-submit-wrap{max-width:1400px;margin:2rem auto;padding:0 4vw;text-align:center;}
 .exam-submit-btn{padding:1rem 3rem;background:linear-gradient(135deg,#0a7e6e,#05f5e9);
