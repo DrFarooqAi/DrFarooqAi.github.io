@@ -141,6 +141,8 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .fc-question strong,.opt-text strong,.ans-analogy strong,.ans-text strong,
 .ans-why-not strong,.exam-q-text strong,.eopt-txt strong,.eq-ans-text strong{
   color:var(--cyan);font-weight:600;font-style:normal;}
+/* paragraph spacing inside answer blocks */
+.ans-analogy br,.ans-text br,.ans-why-not br,.eq-ans-text br{display:block;content:'';margin-top:0.55rem;}
 .ans-correct-badge{display:inline-flex;align-items:center;gap:0.5rem;
   background:rgba(5,245,176,0.1);border:1px solid rgba(5,245,176,0.35);
   padding:0.5rem 1.1rem;margin-bottom:1.2rem;
@@ -416,9 +418,25 @@ async function loadQuestions(){
   renderStudyCard();
 }
 
-/* ════════ KEYWORD HIGHLIGHT ════════ */
+/* ════════ KEYWORD HIGHLIGHT + PARAGRAPH BREAKS ════════ */
 function highlight(text){
   if(!text) return '';
+  let s = text;
+
+  // ── PARAGRAPH BREAKS ─────────────────────────────────────────────────────
+  // 1. Before "Option A / B / C / D" when it appears mid-text (not at start)
+  //    Covers why_not and analogy option lists
+  s = s.replace(/(.) (Option [A-D][\s(])/g, '$1<br><br>$2');
+
+  // 2. After sentence end, before a "Capitalized Label: " structural marker
+  //    Covers explanation points like "The Solution: ", "Scalability: ",
+  //    "Descriptive Statistics → BigQuery: ", "Why it Works: ", etc.
+  s = s.replace(/([.!?])\s+([A-Z][^.:]{3,55}:\s)/g, '$1<br><br>$2');
+
+  // 3. Key Takeaway / Verdict lines that appear after a period
+  s = s.replace(/([.!?])\s+(Key Takeaway|The Verdict|The Verdict:)/g, '$1<br><br>$2');
+
+  // ── KEYWORD HIGHLIGHTING ──────────────────────────────────────────────────
   const kws = [
     'Vertex AI Managed Datasets','Vertex AI Model Monitoring','Vertex AI TensorBoard',
     'Vertex AI Feature Store','Vertex AI Experiments','Vertex AI Pipelines',
@@ -444,7 +462,7 @@ function highlight(text){
     'cold start',
   ];
   const pat = kws.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
-  return text.replace(new RegExp('('+pat+')','gi'),'<strong>$1</strong>');
+  return s.replace(new RegExp('('+pat+')','gi'),'<strong>$1</strong>');
 }
 
 /* ════════════════════════════ STUDY MODE ════════════ */
