@@ -1499,5 +1499,156 @@
     "analogy": "Think of this like a weather app that perfectly predicted rain last winter. When summer arrives, the patterns change — humidity means something different, wind directions shift, and the app starts giving wrong forecasts. You don't remove weather sensors (feature selection) or tweak the algorithm's sensitivity to noise (regularization). Instead, you install a monitor that alerts you when current weather patterns drift significantly from the historical norms the model learned, then retrain on recent summer data. The app adapts to the new seasonal reality.",
     "explanation": "The performance decline is caused by data drift (also called training-serving skew): the statistical distribution of production input features has shifted from what the model was trained on. The correct production-ready response has two parts: first, implement automated monitoring for feature skew using Vertex AI Model Monitoring or TensorFlow Data Validation, which compares incoming data distributions against the training baseline and fires alerts when drift exceeds defined thresholds. Second, trigger a retraining pipeline when those alerts fire, updating the model on recent data that reflects the new distribution. This ensures continuous adaptation to evolving data patterns.",
     "why_not": "Option B (feature selection) removes input features but does not address the root cause — the remaining features still have shifted distributions, so the model will continue to perform poorly on the same underlying problem. Option C (L2 regularization tuning) is a technique for reducing overfitting during training — it has no effect on distribution shift that occurs in production after deployment, and hyperparameter tuning on old data will not fix a model receiving new distribution data. Option D combines the flaws of Option B with arbitrary fixed-schedule monthly retraining: removing features doesn't help, and retraining on a calendar schedule wastes resources when data is stable and may miss critical drift events that occur between scheduled runs."
+  },
+  {
+    "id": 106,
+    "topic": "GPU Memory Management During Training",
+    "question": "You need to train a computer vision model that predicts the type of government ID present in a given image using a GPU-powered virtual machine on Compute Engine. You use the following parameters:\n\nOptimizer: SGD\nImage shape = 224x224\nBatch size = 64\nEpochs = 10\nVerbose = 2\n\nDuring training you encounter the following error: ResourceExhaustedError: Out Of Memory (OOM) when allocating tensor. What should you do?",
+    "options": {
+      "A": "Change the optimizer.",
+      "B": "Reduce the batch size.",
+      "C": "Change the learning rate.",
+      "D": "Reduce the image shape."
+    },
+    "correct": "B",
+    "analogy": "Think of this like loading boxes onto a delivery truck. If you try to load 64 heavy boxes at once and the truck's suspension collapses (OOM), you don't swap the driver (optimizer), adjust the speed limit (learning rate), or cut the boxes in half (reduce image size). You simply load fewer boxes per trip — maybe 32 or 16 — and make more trips. Same destination, same cargo, just smaller batches that fit the truck's capacity.",
+    "explanation": "GPU memory usage during training scales linearly with batch size because the model must store activations, gradients, and optimizer states for every sample in the batch simultaneously. A batch size of 64 for 224x224 images with a deep CNN can easily exceed available GPU memory. Reducing the batch size (e.g., to 32 or 16) is the fastest, least invasive fix: it immediately lowers memory pressure without altering model architecture, input resolution, or training dynamics. You can optionally compensate for smaller batches by adjusting the learning rate or using gradient accumulation if needed.",
+    "why_not": "Option A (change optimizer) has minimal impact on memory; while some optimizers like Adam store more state than SGD, the difference is negligible compared to activation memory from large batches — not a reliable OOM fix. Option C (change learning rate) is a scalar hyperparameter that affects convergence behavior, not memory allocation — it has zero effect on GPU memory usage. Option D (reduce image shape) would lower memory but requires resizing all input data, potentially retraining the model architecture, and may degrade accuracy by losing visual detail — a much heavier change than simply reducing batch size."
+  },
+  {
+    "id": 107,
+    "topic": "TensorFlow Serving CPU Optimization on GKE",
+    "question": "You developed an ML model with AI Platform, and you want to move it to production. You serve a few thousand queries per second and are experiencing latency issues. Incoming requests are served by a load balancer that distributes them across multiple Kubeflow CPU-only pods running on Google Kubernetes Engine (GKE). Your goal is to improve the serving latency without changing the underlying infrastructure. What should you do?",
+    "options": {
+      "A": "Significantly increase the max_batch_size TensorFlow Serving parameter.",
+      "B": "Switch to the tensorflow-model-server-universal version of TensorFlow Serving.",
+      "C": "Significantly increase the max_enqueued_batches TensorFlow Serving parameter.",
+      "D": "Recompile TensorFlow Serving using the source to support CPU-specific optimizations. Instruct GKE to choose an appropriate baseline minimum CPU platform for serving nodes."
+    },
+    "correct": "D",
+    "analogy": "Think of this like a factory assembly line using standard wrenches to tighten bolts. The line is slow, but you can't add robotic arms (new infrastructure). Instead, you swap in torque-optimized, ergonomically designed wrenches that fit the bolts perfectly, and ensure workers stand at the right height to use them efficiently. Same workers, same line — just better tools and positioning. That's CPU-specific optimization: same hardware, faster execution.",
+    "explanation": "Since the infrastructure must remain CPU-only pods on GKE, the most effective latency improvement comes from maximizing the computational efficiency of each CPU cycle. Option D enables this by: (1) recompiling TensorFlow Serving with CPU-specific instruction set optimizations (AVX2, AVX-512, etc.) that accelerate tensor operations, and (2) configuring GKE to schedule pods on nodes with a minimum CPU platform that supports these instructions. This yields significant per-inference speedups without adding GPUs, changing pod count, or altering the deployment architecture — directly addressing latency within the given constraints.",
+    "why_not": "Option A (increase max_batch_size) improves throughput but increases latency: requests must wait longer for batches to fill before processing, which is counterproductive for latency-sensitive serving. Option B (switch to universal TensorFlow Serving) removes CPU-specific optimizations — the universal binary is built for maximum compatibility, not performance. This would likely worsen latency, not improve it. Option C (increase max_enqueued_batches) allows more requests to queue but does not speed up individual inference; it may actually increase tail latency as requests wait longer in larger queues without faster processing."
+  },
+  {
+    "id": 108,
+    "topic": "BigQuery Native Normalization for Demand Forecasting",
+    "question": "You have a demand forecasting pipeline in production that uses Dataflow to preprocess raw data prior to model training and prediction. During preprocessing, you employ Z-score normalization on data stored in BigQuery and write it back to BigQuery. New training data is added every week. You want to make the process more efficient by minimizing computation time and manual intervention. What should you do?",
+    "options": {
+      "A": "Normalize the data using Google Kubernetes Engine.",
+      "B": "Translate the normalization algorithm into SQL for use with BigQuery.",
+      "C": "Use the normalizer_fn argument in TensorFlow's Feature Column API.",
+      "D": "Normalize the data with Apache Spark using the Dataproc connector for BigQuery."
+    },
+    "correct": "B",
+    "analogy": "Think of this like calculating average test scores for a school district. Instead of exporting all student grades to a separate calculator app, computing averages there, then re-uploading the results, you just ask the school's database directly: 'What's each student's score minus the class average, divided by the class standard deviation?' One SQL query, instant answer, zero data movement. That's BigQuery doing normalization natively.",
+    "explanation": "Z-score normalization is a simple statistical transformation: (value - mean) / stddev. Since the data already resides in BigQuery, translating this logic into SQL using aggregate functions (AVG(), STDDEV()) and window functions allows normalization to execute entirely within BigQuery's serverless engine. This eliminates: (1) Dataflow job orchestration overhead, (2) data movement between systems, (3) cluster management or scaling concerns, and (4) weekly manual intervention. BigQuery automatically scales to handle weekly data additions, computes the transformation in-place, and writes results back instantly — the most efficient path with minimal code change.",
+    "why_not": "Option A (GKE) requires provisioning, managing, and scaling Kubernetes clusters just to run a simple statistical calculation — massive operational overhead for a task BigQuery handles natively. Option C (TensorFlow Feature Column API normalizer_fn) applies normalization during model training, not during the preprocessing pipeline that writes normalized data back to BigQuery; it doesn't solve the efficiency goal for the ETL workflow. Option D (Dataproc + Spark) introduces cluster management, Spark code maintenance, and data connector complexity for a calculation that BigQuery can perform more simply and cheaply with a single SQL statement."
+  },
+  {
+    "id": 109,
+    "topic": "Kubeflow Pipelines Experiment Tracking for Keras Architecture Search",
+    "question": "You need to design a customized deep neural network in Keras that will predict customer purchases based on their purchase history. You want to explore model performance using multiple model architectures, store training data, and be able to compare the evaluation metrics in the same dashboard. What should you do?",
+    "options": {
+      "A": "Create multiple models using AutoML Tables.",
+      "B": "Automate multiple training runs using Cloud Composer.",
+      "C": "Run multiple training jobs on AI Platform with similar job names.",
+      "D": "Create an experiment in Kubeflow Pipelines to organize multiple runs."
+    },
+    "correct": "D",
+    "analogy": "Think of this like a chef testing new recipes. Instead of cooking each dish in a different kitchen with no notes (Option C), hiring a scheduler to book kitchen time but not taste the food (Option B), or using a pre-made meal kit that doesn't allow custom ingredients (Option A), the chef uses a professional test kitchen with a digital logbook. Every recipe variation is documented, ingredients and results are stored, and a dashboard shows side-by-side taste scores, cook times, and customer ratings. That's Kubeflow Experiments: organized, comparable, reproducible.",
+    "explanation": "Kubeflow Pipelines provides native experiment tracking designed exactly for this workflow. By creating an experiment, you can: (1) define and launch multiple pipeline runs with different Keras model architectures, (2) automatically log metrics, parameters, and artifacts (including training data references) to centralized storage, and (3) visualize and compare evaluation metrics across all runs in the Kubeflow UI dashboard. This enables systematic hyperparameter and architecture exploration with full reproducibility — all while keeping custom Keras code intact.",
+    "why_not": "Option A (AutoML Tables) automates model selection but does not support custom Keras architectures — it abstracts away the code-level control required by the question. Option B (Cloud Composer) orchestrates workflow scheduling but provides no built-in experiment tracking, metric storage, or comparison dashboard — you'd still need to build those capabilities manually. Option C (AI Platform jobs with similar names) is an ad-hoc, manual approach with no structured metadata tracking or unified visualization — comparing results requires manually aggregating logs, which is error-prone and doesn't scale."
+  },
+  {
+    "id": 110,
+    "topic": "Pre-Built Kubeflow BigQuery Pipeline Component",
+    "question": "You are developing a Kubeflow pipeline on Google Kubernetes Engine. The first step in the pipeline is to issue a query against BigQuery. You plan to use the results of that query as the input to the next step in your pipeline. You want to achieve this in the easiest way possible. What should you do?",
+    "options": {
+      "A": "Use the BigQuery console to execute your query, and then save the query results into a new BigQuery table.",
+      "B": "Write a Python script that uses the BigQuery API to execute queries against BigQuery. Execute this script as the first step in your Kubeflow pipeline.",
+      "C": "Use the Kubeflow Pipelines domain-specific language to create a custom component that uses the Python BigQuery client library to execute queries.",
+      "D": "Locate the Kubeflow Pipelines repository on GitHub. Find the BigQuery Query Component, copy that component's URL, and use it to load the component into your pipeline. Use the component to execute queries against BigQuery."
+    },
+    "correct": "D",
+    "analogy": "Think of this like building a LEGO castle. Instead of carving each brick from wood yourself (writing custom scripts), or hiring an architect to design custom bricks (building components from DSL), or manually placing pre-made bricks one-by-one outside the castle walls (BigQuery console), you simply open the official LEGO instruction booklet, find the pre-made 'window piece' (BigQuery component), snap it into your build using the provided connector URL, and keep building. Same result, zero custom fabrication, maximum speed.",
+    "explanation": "Option D leverages Kubeflow Pipelines' component hub: pre-built, reusable components maintained by Google and the community. The BigQuery Query Component is already containerized, handles authentication via workload identity, manages input/output artifacts automatically, and integrates natively with pipeline orchestration. By loading it via URL, you get a production-ready BigQuery step with zero custom code — the absolute easiest path to query BigQuery and pass results to downstream pipeline steps.",
+    "why_not": "Option A requires manual execution outside the pipeline, breaking automation and reproducibility — results must be manually referenced in subsequent steps, defeating the purpose of an orchestrated workflow. Option B works but demands writing and maintaining custom Python code for API calls, error handling, and artifact passing — significantly more effort than using a validated, pre-built component. Option C requires learning the Kubeflow DSL, defining component specs, building containers, and testing — the most complex approach when a ready-made component already exists."
+  },
+  {
+    "id": 111,
+    "topic": "Temporal Data Leakage in Time-Series Models",
+    "question": "You are building a model to predict daily temperatures. You split the data randomly and then transformed the training and test datasets. Temperature data for model training is uploaded hourly. During testing, your model performed with 97% accuracy; however, after deploying to production, the model's accuracy dropped to 66%. How can you make your production model more accurate?",
+    "options": {
+      "A": "Normalize the data for the training and test datasets as two separate steps.",
+      "B": "Split the training and test data based on time rather than a random split to avoid leakage.",
+      "C": "Add more data to your test set to ensure that you have a fair distribution and sample for testing.",
+      "D": "Apply data transformations before splitting, and cross-validate to make sure that the transformations are applied to both the training and test sets."
+    },
+    "correct": "B",
+    "analogy": "Think of this like a student studying for a history exam. If the teacher gives them the final exam questions to practice with (random split mixing future/past), the student scores 97%. But on the real exam with new questions about future events they haven't seen, they score 66%. The problem isn't the student's ability — it's that practice included answers from the test itself. To fix this, the teacher must ensure practice only covers past events, and the test only asks about the future. That's time-based splitting.",
+    "explanation": "Temperature prediction is a time-series forecasting problem where data has inherent temporal ordering. Randomly splitting hourly temperature data allows future values to leak into the training set, enabling the model to learn patterns that 'peek ahead' — artificially inflating validation accuracy to 97%. In production, the model only sees past data to predict the future, so this leakage disappears and accuracy drops to the true 66%. Splitting chronologically (training on earlier timestamps, testing on later ones) prevents future-to-past leakage, ensuring evaluation reflects real-world deployment conditions and producing a model that generalizes correctly.",
+    "why_not": "Option A (separate normalization) addresses preprocessing consistency but does not fix the fundamental data leakage caused by random temporal splitting — the root cause of the accuracy gap. Option C (adding more test data) improves statistical confidence in evaluation but does not prevent leakage; if the test set still contains randomly mixed timestamps, the model will continue to overfit to future information. Option D (transform before splitting + cross-validation) is a best practice for i.i.d. data but is insufficient for time-series: even with consistent transformations, random splitting still leaks temporal information, and standard cross-validation violates temporal ordering assumptions."
+  },
+  {
+    "id": 112,
+    "topic": "Migrating TensorFlow Estimators to AI Platform with Minimal Refactoring",
+    "question": "You are developing models to classify customer support emails. You created models with TensorFlow Estimators using small datasets on your on-premises system, but you now need to train the models using large datasets to ensure high performance. You will port your models to Google Cloud and want to minimize code refactoring and infrastructure overhead for easier migration from on-prem to cloud. What should you do?",
+    "options": {
+      "A": "Use AI Platform for distributed training.",
+      "B": "Create a cluster on Dataproc for training.",
+      "C": "Create a Managed Instance Group with autoscaling.",
+      "D": "Use Kubeflow Pipelines to train on a Google Kubernetes Engine cluster."
+    },
+    "correct": "A",
+    "analogy": "Think of this like moving a small bakery's recipe to a commercial kitchen. Instead of building your own industrial ovens from scratch (Managed Instance Group), renting a shared kitchen space and learning its quirks (Dataproc), or designing a fully automated robotic bakery (Kubeflow/GKE), you simply walk into a turnkey commercial kitchen that already has ovens, mixers, and staff ready. You bring your same recipe (TensorFlow Estimator code), tell them how many loaves you need (distributed training config), and they handle the rest — same ingredients, same steps, just bigger scale.",
+    "explanation": "AI Platform Training (Vertex AI) provides native, first-class support for TensorFlow Estimators. You can submit your existing estimator-based training code with minimal to no modifications — often just wrapping it in a task.py entrypoint and specifying a scale-tier or machine type for distributed training. The service automatically handles: cluster provisioning, distributed strategy coordination (via tf.distribute), checkpointing, logging, and teardown. This delivers large-scale training capability with zero infrastructure management and minimal code refactoring — exactly matching the migration goals.",
+    "why_not": "Option B (Dataproc) is optimized for Apache Spark/Hadoop workloads; running TensorFlow Estimators on Dataproc requires manual cluster configuration, dependency management, and distributed training setup — significantly more overhead and refactoring. Option C (Managed Instance Group) is an IaaS solution requiring you to manually install TensorFlow, configure distributed training logic, handle fault tolerance, and manage scaling policies — maximum infrastructure overhead, maximum code changes. Option D (Kubeflow on GKE) is powerful for complex ML orchestration but introduces substantial complexity: containerizing code, writing pipeline components, managing Kubernetes resources, and debugging distributed training in a custom environment — overkill when a managed service already supports your exact framework."
+  },
+  {
+    "id": 113,
+    "topic": "AI Platform Batch Predictions from BigQuery",
+    "question": "You have trained a text classification model in TensorFlow using AI Platform. You want to use the trained model for batch predictions on text data stored in BigQuery while minimizing computational overhead. What should you do?",
+    "options": {
+      "A": "Export the model to BigQuery ML.",
+      "B": "Deploy and version the model on AI Platform.",
+      "C": "Use Dataflow with the SavedModel to read the data from BigQuery.",
+      "D": "Submit a batch prediction job on AI Platform that points to the model location in Cloud Storage."
+    },
+    "correct": "D",
+    "analogy": "Think of this like a printing press that needs to process 10,000 documents. Instead of building a custom conveyor belt system to feed papers into the press (Dataflow), converting the documents to a different language the press doesn't speak (BigQuery ML export), or keeping the press running 24/7 waiting for single-page requests (online deployment), you simply drop the entire stack of documents at the press's loading dock, hit 'Start Batch Job,' and pick up the printed results later. Same press, same ink, zero custom setup — just efficient bulk processing.",
+    "explanation": "AI Platform (Vertex AI) provides a native batch prediction feature designed exactly for this scenario. By submitting a batch prediction job that references your SavedModel in Cloud Storage and your BigQuery table as the input source, the service automatically: (1) provisions optimal compute resources, (2) reads data directly from BigQuery without export, (3) distributes inference across workers for parallel processing, and (4) writes predictions back to BigQuery or GCS. This is fully managed, scales to petabyte workloads, shuts down resources when complete, and requires zero pipeline code — minimizing both development effort and computational overhead.",
+    "why_not": "Option A is not feasible: BigQuery ML uses its own model format and SQL-based training; you cannot 'export' a custom TensorFlow SavedModel into BigQuery ML without complete retraining and potential architecture limitations. Option B configures the model for online/real-time predictions, which incurs always-on infrastructure costs and is optimized for low-latency single requests — inefficient and expensive for large-scale batch workloads. Option C works but adds unnecessary complexity: building a Dataflow pipeline requires custom code for reading BigQuery, loading the SavedModel, handling batching, error recovery, and writing outputs — significantly more development and operational overhead than the managed batch prediction API."
+  },
+  {
+    "id": 114,
+    "topic": "Event-Driven Kubeflow Training Trigger on Cloud Storage",
+    "question": "You work with a data engineering team that has developed a pipeline to clean your dataset and save it in a Cloud Storage bucket. You have created an ML model and want to use the data to refresh your model as soon as new data is available. As part of your CI/CD workflow, you want to automatically run a Kubeflow Pipelines training job on Google Kubernetes Engine (GKE). How should you architect this workflow?",
+    "options": {
+      "A": "Configure your pipeline with Dataflow, which saves the files in Cloud Storage. After the file is saved, start the training job on a GKE cluster.",
+      "B": "Use App Engine to create a lightweight Python client that continuously polls Cloud Storage for new files. As soon as a file arrives, initiate the training job.",
+      "C": "Configure a Cloud Storage trigger to send a message to a Pub/Sub topic when a new file is available in a storage bucket. Use a Pub/Sub-triggered Cloud Function to start the training job on a GKE cluster.",
+      "D": "Use Cloud Scheduler to schedule jobs at a regular interval. For the first step of the job, check the timestamp of objects in your Cloud Storage bucket. If there are no new files since the last run, abort the job."
+    },
+    "correct": "C",
+    "analogy": "Think of this like a pizza kitchen that starts baking only when an order comes in. Instead of having the delivery driver yell to the kitchen when they drop off ingredients (Option A), hiring someone to stare at the pantry door waiting for deliveries (Option B), or checking the pantry every 15 minutes whether hungry or not (Option D), you install a smart sensor on the pantry shelf. The moment new ingredients arrive, it sends a text to the chef's phone (Pub/Sub → Cloud Function), who immediately starts the oven (triggers Kubeflow job). Instant, automatic, zero wasted effort.",
+    "explanation": "Option C implements a fully event-driven, serverless architecture using native GCP integrations: Cloud Storage notifications automatically publish to Pub/Sub when new files arrive; a lightweight Cloud Function subscribed to that topic reacts instantly to trigger the Kubeflow training job on GKE via API call. This design provides: (1) near-zero latency between data arrival and training start, (2) no polling overhead or wasted compute, (3) automatic scaling and managed infrastructure, and (4) clean decoupling between data engineering and ML training workflows — the most efficient and maintainable CI/CD pattern for this use case.",
+    "why_not": "Option A couples data processing (Dataflow) with ML orchestration, violating separation of concerns; Dataflow isn't designed to trigger downstream training jobs and adds unnecessary complexity to the data pipeline. Option B uses App Engine for continuous polling, which wastes resources checking for files that may not exist, introduces latency between file arrival and detection, and adds operational overhead for managing a long-running service. Option D relies on scheduled polling via Cloud Scheduler, which is inefficient (runs even when no new data exists), introduces variable latency (up to the scheduling interval), and requires custom logic to track file timestamps — all avoidable with native event-driven triggers."
+  },
+  {
+    "id": 115,
+    "topic": "Efficient Hyperparameter Tuning with Early Stopping and Search Space Reduction",
+    "question": "You have a functioning end-to-end ML pipeline that involves tuning the hyperparameters of your ML model using AI Platform, and then using the best-tuned parameters for training. Hypertuning is taking longer than expected and is delaying the downstream processes. You want to speed up the tuning job without significantly compromising its effectiveness. Which actions should you take? (Choose two.)",
+    "options": {
+      "A": "Decrease the number of parallel trials.",
+      "B": "Decrease the range of floating-point values.",
+      "C": "Set the early stopping parameter to TRUE.",
+      "D": "Change the search algorithm from Bayesian search to random search.",
+      "E": "Decrease the maximum number of trials during subsequent training phases."
+    },
+    "correct": "BC",
+    "analogy": "Think of this like searching for a lost set of keys in a large park. Narrow the Search Area (Option B): Instead of searching the entire park from the north gate to the south lake (wide range), you remember you were near the fountain, so you focus your search there — covering less ground but far more likely to find the keys quickly. Stop Digging in the Wrong Spots (Option C): If a searcher starts digging in a spot that clearly has no metal detector signal (bad trial), you tell them to stop immediately and move to a new spot (early stopping). This saves time versus letting them dig a full 3-foot hole before realizing nothing is there.",
+    "explanation": "To speed up hyperparameter tuning without sacrificing model quality, optimize the search efficiency with two complementary techniques. Option B (Decrease the range of floating-point values): By narrowing the min and max values for floating-point hyperparameters (like learning rate) to a more reasonable domain based on domain knowledge or prior runs, you reduce the search space. This allows the algorithm to explore the relevant area more densely and converge on the optimum faster, without wasting trials on values known to be ineffective. Option C (Early Stopping): Enabling early stopping allows the tuning service to terminate trials that are performing poorly compared to the best trial found so far. This prevents wasting compute resources and time on configurations with no chance of winning, significantly reducing total wall-clock time while preserving the quality of the final result.",
+    "why_not": "Option A (Decrease parallel trials) would slow down the job — running more trials in parallel is the primary way to reduce wall-clock time in distributed tuning; decreasing parallelism forces trials to run more sequentially. Option D (Switch to Random Search) is generally less effective than Bayesian search for the same number of trials; Bayesian optimization learns from previous trials to pick better next parameters, whereas Random Search picks blindly — switching would likely require more trials to achieve the same effectiveness, increasing time. Option E (Decrease max trials) directly reduces the search budget; while it speeds up the job by doing less work, it significantly increases the risk of missing the global optimum because the algorithm has fewer opportunities to explore the parameter space, violating the 'without compromising effectiveness' constraint."
   }
 ]
