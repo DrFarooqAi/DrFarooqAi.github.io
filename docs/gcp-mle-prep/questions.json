@@ -1800,5 +1800,155 @@
     "analogy": "Think of this like upgrading from a bicycle to a motorcycle for a cross-country trip. You don't: buy a jet engine but forget you need a pilot's license and custom fuel lines (TPU + manual setup), buy a race car but spend weeks assembling the engine from scratch (8 GPUs + manual dependencies), or get a slightly faster bicycle with better tires (more powerful CPU). Instead, you grab a ready-to-ride motorcycle from the rental shop (Deep Learning VM + GPU + pre-installed libraries), hop on, and start driving immediately. Same destination, zero assembly time, massive speedup.",
     "explanation": "Deep Learning VMs are pre-configured Google Cloud images with TensorFlow, PyTorch, CUDA, cuDNN, and other ML libraries pre-installed — eliminating days of dependency management. Adding a single GPU provides orders-of-magnitude faster training for CNNs compared to CPUs, directly addressing the slow convergence issue. Critically, GPUs work with standard TensorFlow/PyTorch code without manual device placement or Estimator wrapping — your existing code runs as-is. The n1-standard-2 with 1 GPU is a cost-effective starting point for experimentation; you can scale to larger GPUs or multi-GPU instances once the pipeline is validated.",
     "why_not": "Option A (TPU + manual setup) fails on two counts: TPUs require code modifications (Estimator API or tf.distribute.TPUStrategy with explicit device placement) that your code lacks, and manual dependency installation adds significant setup time — contradicting both the technical constraints and the reduce time-to-market goal. Option B (8 GPUs + manual setup) provides raw power but requires manually installing CUDA, cuDNN, drivers, and framework dependencies — a complex, error-prone process that delays experimentation. Deep Learning VMs provide the same GPU capability with zero setup overhead. Option D (powerful CPU + pre-installed libraries) solves the setup problem but ignores the core bottleneck: CNN training is highly parallelizable and benefits massively from GPU acceleration — even a 16-core CPU converges far slower than a single GPU for convolutional operations."
+  },
+  {
+    "id": 126,
+    "topic": "Labels for Scalable AI Platform Resource Organization",
+    "question": "You work on a growing team of more than 50 data scientists who all use AI Platform. You are designing a strategy to organize your jobs, models, and versions in a clean and scalable way. Which strategy should you choose?",
+    "options": {
+      "A": "Set up restrictive IAM permissions on the AI Platform notebooks so that only a single user or group can access a given instance.",
+      "B": "Separate each data scientist's work into a different project to ensure that the jobs, models, and versions created by each data scientist are accessible only to that user.",
+      "C": "Use labels to organize resources into descriptive categories. Apply a label to each created resource so that users can filter the results by label when viewing or monitoring the resources.",
+      "D": "Set up a BigQuery sink for Cloud Logging logs that is appropriately filtered to capture information about AI Platform resource usage. In BigQuery, create a SQL view that maps users to the resources they are using."
+    },
+    "correct": "C",
+    "analogy": "Think of this like organizing a shared office library with 50+ researchers. Instead of locking each bookshelf to a single person (Option A), building a separate library building for each researcher (Option B), or installing security cameras to log who touched which book and then analyzing the footage later (Option D), you simply put colored stickers (labels) on every book: 'Team A,' 'Project X,' 'Q4 Experiment.' Now anyone can quickly filter the catalog by sticker color to find what they need — collaborative, scalable, zero friction.",
+    "explanation": "Labels are Google Cloud's native, first-class mechanism for organizing and categorizing resources across all services, including AI Platform. By applying descriptive labels (e.g., team:fraud-detection, project:churn-v2, owner:alice, env:prod) to jobs, models, and versions: (1) users can filter and search resources in the Console or via API, (2) monitoring and billing can be segmented by label, (3) automation scripts can target resources by label, and (4) collaboration is preserved since labels don't restrict access — they add discoverability. This approach scales effortlessly to 50+ users, requires zero infrastructure changes, and aligns with Google's recommended resource management best practices.",
+    "why_not": "Option A focuses on notebook access control, which is unrelated to organizing jobs, models, and versions. Restrictive IAM also hinders collaboration and doesn't provide a scalable taxonomy for resource discovery. Option B creates a separate GCP project per data scientist — projects are designed for billing isolation and security boundaries, not per-user organization. Managing 50+ projects introduces massive operational overhead and prevents resource sharing. Option D is a reactive auditing solution, not an organizational strategy — analyzing logs in BigQuery helps with compliance or cost attribution but doesn't help data scientists actively find, filter, or manage their resources during daily workflows."
+  },
+  {
+    "id": 127,
+    "topic": "GPU Availability vs. Quota: Resolving Resource Not Found Errors",
+    "question": "You are training a deep learning model for semantic image segmentation with reduced training time. While using a Deep Learning VM Image, you receive the following error: The resource 'projects/deeplearning-platform/zones/europe-west4-c/acceleratorTypes/nvidia-tesla-k80' was not found. What should you do?",
+    "options": {
+      "A": "Ensure that you have GPU quota in the selected region.",
+      "B": "Ensure that the required GPU is available in the selected region.",
+      "C": "Ensure that you have preemptible GPU quota in the selected region.",
+      "D": "Ensure that the selected GPU has enough GPU memory for the workload."
+    },
+    "correct": "B",
+    "analogy": "Think of this like ordering a specific car model at a dealership. If the salesperson says 'We don't carry that model at this location,' it doesn't matter if you have enough money (quota) or if the car has enough trunk space (memory) — the car simply isn't stocked at that dealership. Your solution is to check which dealerships actually stock that model, or pick a different model that is available locally. Same principle with GPUs: 'not found' means unavailable, not unaffordable.",
+    "explanation": "The error message explicitly states the resource was 'not found' — this is an availability issue, not a quota or capacity issue. Google Cloud does not offer every GPU type in every zone. The NVIDIA Tesla K80 is an older GPU that has been deprecated or is simply not provisioned in certain zones like europe-west4-c. To resolve this: (1) check the GPU availability documentation for your target region, (2) select a GPU type that is actually offered in that zone (e.g., T4, V100, A100), or (3) change your zone/region to one that supports the K80 if you specifically require it. This is a configuration fix, not a quota request.",
+    "why_not": "Option A (GPU quota) would produce an error like 'Quota GPUS_ALL_REGIONS exceeded' or 'Insufficient quota' — not 'resource not found.' Quota and availability are distinct concepts. Option C (preemptible GPU quota) is irrelevant: the error doesn't mention preemptible GPUs, and preemptible quota issues also manifest as quota-exceeded errors, not missing resource errors. Option D (GPU memory) is a runtime concern: insufficient memory would cause an OOM error during model training, not a provisioning-time 'resource not found' error when creating the VM."
+  },
+  {
+    "id": 128,
+    "topic": "Preventing Author-Level Data Leakage in NLP Research Splits",
+    "question": "Your team is working on an NLP research project to predict political affiliation of authors based on articles they have written. You have a large training dataset structured with authors, their political parties, and multiple texts per author. You followed the standard 80%-10%-10% data distribution across the training, testing, and evaluation subsets. How should you distribute the training examples across the train-test-eval subsets while maintaining the 80-10-10 proportion?",
+    "options": {
+      "A": "Distribute texts randomly across the train-test-eval subsets.",
+      "B": "Distribute authors randomly across the train-test-eval subsets.",
+      "C": "Distribute sentences randomly across the train-test-eval subsets.",
+      "D": "Distribute paragraphs of texts across the train-test-eval subsets."
+    },
+    "correct": "B",
+    "analogy": "Think of this like testing whether you can identify a person's nationality by their accent. If you train on some recordings of John speaking, then test on other recordings of John speaking, you're just recognizing John's voice — not learning to detect nationality. To properly test, you need to train on completely different people than you test on. Keep all of Author A's writings together in one set, never split across train/test/eval.",
+    "explanation": "Since the task is to predict author-level political affiliation, you must prevent data leakage by ensuring no author appears in multiple subsets. Option B keeps all texts from the same author together in a single subset (train, test, or eval). This ensures the model is evaluated on completely unseen authors, testing true generalization to new writers rather than simply recognizing writing patterns from authors it has already seen during training. If the same author appears in both train and test, the model learns author-specific style cues rather than genuine political affiliation signals.",
+    "why_not": "Option A splits different texts from the same author across subsets, allowing the model to learn author-specific writing styles during training and recognize them in test/eval — severe data leakage that inflates evaluation metrics. Option C splits individual sentences from the same text across subsets, creating massive leakage where the model sees nearly identical content and stylistic patterns in both training and evaluation. Option D splits paragraphs from the same texts, which also causes leakage since writing style and topic consistency within a document leak between subsets, producing artificially high evaluation scores."
+  },
+  {
+    "id": 129,
+    "topic": "Transfer Learning for Domain-Specific Text Classification with Full TensorFlow Control",
+    "question": "Your team has been tasked with creating an ML solution in Google Cloud to classify support requests for one of your platforms. You analyzed the requirements and decided to use TensorFlow to build the classifier so that you have full control of the model's code, serving, and deployment. You will use Kubeflow Pipelines for the ML platform. To save time, you want to build on existing resources and use managed services instead of building a completely new model. How should you build the classifier?",
+    "options": {
+      "A": "Use the Natural Language API to classify support requests.",
+      "B": "Use AutoML Natural Language to build the support requests classifier.",
+      "C": "Use an established text classification model on AI Platform to perform transfer learning.",
+      "D": "Use an established text classification model on AI Platform as-is to classify support requests."
+    },
+    "correct": "C",
+    "analogy": "Think of this like renovating a house. Instead of demolishing and rebuilding from scratch (training from zero), or renting a fully furnished hotel room where you can't move the furniture (APIs/AutoML), you take a well-built structurally sound blueprint (established model), keep the foundation and framing, and customize the interior to fit your specific needs (transfer learning). You save months of construction time, keep full ownership of the renovation plans, and end up with a solution that actually fits your requirements.",
+    "explanation": "Transfer learning leverages a pre-trained, established model (referenced via AI Platform or TensorFlow Hub) and fine-tunes it on your specific support request dataset. This approach: (1) saves significant time and compute by starting from learned linguistic features rather than training from scratch, (2) preserves full TensorFlow control over architecture, training loops, serving logic, and deployment, (3) integrates cleanly into Kubeflow Pipelines for reproducible orchestration, and (4) adapts effectively to domain-specific terminology in support tickets without sacrificing customization or control.",
+    "why_not": "Option A (Natural Language API) is a black-box managed service with no TensorFlow code access, no custom serving logic, and no deployment control — directly violating the requirement for full ownership. Option B (AutoML Natural Language) abstracts away infrastructure and code for no-code/low-code model creation; it does not provide the granular TensorFlow control over serving and deployment that the scenario explicitly demands. Option D (using a model as-is) ignores domain adaptation — support request classification relies heavily on company-specific terminology, product names, and internal routing logic; an off-the-shelf model without fine-tuning will perform poorly on these domain-specific categories."
+  },
+  {
+    "id": 130,
+    "topic": "ML Production Readiness: Model Performance Monitoring",
+    "question": "You recently joined a machine learning team that will soon release a new project. As a lead on the project, you are asked to determine the production readiness of the ML components. The team has already tested features and data, model development, and infrastructure. Which additional readiness check should you recommend to the team?",
+    "options": {
+      "A": "Ensure that training is reproducible.",
+      "B": "Ensure that all hyperparameters are tuned.",
+      "C": "Ensure that model performance is monitored.",
+      "D": "Ensure that feature expectations are captured in the schema."
+    },
+    "correct": "C",
+    "analogy": "Think of this like a car that has passed all safety inspections. You've checked the engine (model), the fuel system (data), and the manufacturing plant (infrastructure). But before you let a customer drive it on the highway (production), you must ensure the dashboard has working gauges and warning lights (monitoring). You can't just hope the car keeps running perfectly; you need a way to know immediately if the temperature rises or the fuel drops.",
+    "explanation": "Production readiness is not just about passing pre-deployment tests — it's about ensuring the system remains healthy after deployment. In ML, data distributions change (data drift) and the relationship between features and targets changes (concept drift). Monitoring ensures there are systems in place (alerts, dashboards) to detect these changes and trigger retraining before the model fails in production. Without monitoring, a degrading model may silently cause business harm for weeks before anyone notices.",
+    "why_not": "Option A (Reproducibility) is typically ensured during the infrastructure and model development phases by using version-controlled pipelines and code — if infrastructure is tested, reproducibility is implied. Option B (Hyperparameter tuning) is a core part of model development, which the prompt states has already been tested. Option D (Feature schema) — capturing feature expectations via data validation schemas is part of features and data testing, which is also stated as completed."
+  },
+  {
+    "id": 131,
+    "topic": "AUC PR Optimization for Imbalanced Fraud Detection",
+    "question": "You work for a credit card company and have been asked to create a custom fraud detection model based on historical data using AutoML Tables. You need to prioritize detection of fraudulent transactions while minimizing false positives. Which optimization objective should you use when training the model?",
+    "options": {
+      "A": "An optimization objective that minimizes Log loss.",
+      "B": "An optimization objective that maximizes the Precision at a Recall value of 0.50.",
+      "C": "An optimization objective that maximizes the area under the precision-recall curve (AUC PR) value.",
+      "D": "An optimization objective that maximizes the area under the receiver operating characteristic curve (AUC ROC) value."
+    },
+    "correct": "C",
+    "analogy": "Think of this like a metal detector at an airport. If you set it too sensitive, it beeps at every belt buckle (high recall, terrible precision — massive false positives). If you set it too insensitive, it misses actual weapons (low recall — missed fraud). AUC PR is like tuning that detector across all sensitivity levels and measuring its overall success at catching actual threats while ignoring harmless items. It focuses purely on the balance between catching the bad stuff and not annoying innocent travelers.",
+    "explanation": "Fraud detection datasets are highly imbalanced — legitimate transactions vastly outnumber fraud. AUC PR is specifically designed for imbalanced classification because it ignores true negatives and evaluates only the trade-off between precision (minimizing false positives) and recall (catching fraud) across all classification thresholds. Maximizing AUC PR directly aligns with the business requirement: it pushes the model to find the sweet spot where fraud detection is maximized without triggering excessive false alarms, which is critical in credit card systems where false positives frustrate customers and increase operational costs.",
+    "why_not": "Option A (Log loss) treats all classes equally and optimizes for overall probability calibration. In severe class imbalance, it becomes dominated by the majority class and fails to explicitly optimize the precision-recall trade-off needed for fraud detection. Option B (Precision at Recall = 0.50) forces the model to miss 50% of all fraudulent transactions — directly contradicting the requirement to prioritize detection of fraud. Option D (AUC ROC) plots True Positive Rate vs. False Positive Rate; in imbalanced datasets, the high volume of true negatives inflates the score, making models appear better than they actually are at detecting the rare positive class — not recommended for fraud detection."
+  },
+  {
+    "id": 132,
+    "topic": "Watch Time as the Gold Standard Metric for Video Popularity",
+    "question": "Your company manages a video sharing website where users can watch and upload videos. You need to create an ML model to predict which newly uploaded videos will be the most popular so that those videos can be prioritized on your company's website. Which result should you use to determine whether the model is successful?",
+    "options": {
+      "A": "The model predicts videos as popular if the user who uploads them has over 10,000 likes.",
+      "B": "The model predicts 97.5% of the most popular clickbait videos measured by number of clicks.",
+      "C": "The model predicts 95% of the most popular videos measured by watch time within 30 days of being uploaded.",
+      "D": "The Pearson correlation coefficient between the log-transformed number of views after 7 days and 30 days."
+    },
+    "correct": "C",
+    "analogy": "Think of this like a movie theater deciding which films to feature on the marquee. You don't pick movies based on the director's Instagram followers (Option A), how many people bought tickets only for action trailers (Option B), or whether day-7 ticket sales predict day-30 sales (Option D). Instead, you measure actual time spent watching the full movie over a month. A film that keeps people in their seats for 2 hours is more valuable than one they walk out of after 10 minutes — even if both had the same opening buzz.",
+    "explanation": "Watch time is the gold standard metric for video platform success because it directly measures user engagement and content quality. Unlike clicks (which can be gamed by clickbait), watch time indicates viewers found the video valuable enough to continue watching. Option C provides a meaningful business metric aligned with platform goals (maximizing engagement), a reasonable evaluation window (30 days captures both viral spikes and sustained interest), and a clear success threshold (95% of top videos correctly identified). This directly validates whether the model achieves its purpose: surfacing content that keeps users on the platform longer.",
+    "why_not": "Option A is a heuristic rule based on uploader popularity, not a model evaluation metric — it ignores actual video quality and creates a 'rich get richer' bias that stifles new creators. Option B focuses only on clickbait videos and uses clicks as the metric; clicks measure curiosity, not engagement — users might click but immediately leave, which harms platform metrics. Option D measures correlation between early and late views, which assesses metric stability rather than whether the model successfully identifies popular content — it is a diagnostic statistic, not a success criterion."
+  },
+  {
+    "id": 133,
+    "topic": "Feature Normalization to Stabilize Gradient Optimization",
+    "question": "You are working on a Neural Network-based project. The dataset provided to you has columns with different ranges. While preparing the data for model training, you discover that gradient optimization is having difficulty moving weights to a good solution. What should you do?",
+    "options": {
+      "A": "Use feature construction to combine the strongest features.",
+      "B": "Use the representation transformation (normalization) technique.",
+      "C": "Improve the data cleaning step by removing features with missing values.",
+      "D": "Change the partitioning step to reduce the dimension of the test set and have a larger training set."
+    },
+    "correct": "B",
+    "analogy": "Think of gradient descent like a hiker trying to walk down a mountain in the fog. If the mountain has a steep narrow valley in one direction and a gentle wide slope in another (different feature scales), the hiker will zigzag wildly or get stuck bouncing off the steep walls. Normalization is like stretching the map so the mountain becomes a perfect cone — every step goes smoothly toward the bottom, regardless of direction.",
+    "explanation": "Neural networks rely on gradient descent to minimize loss. When features have vastly different scales (e.g., age 0–100 vs. income 0–1,000,000), the loss landscape becomes elongated and distorted. Gradients are large for some features and tiny for others, causing oscillation, slow convergence, or failure to converge. Normalization (scaling features to a standard range like [0,1] or mean 0/std 1) equalizes the contribution of each feature, smoothing the optimization landscape and allowing the optimizer to move weights efficiently toward the global minimum.",
+    "why_not": "Option A (feature construction) creates new features but does not address the scale mismatch of existing inputs — it is a performance enhancement tactic, not an optimization stability fix. Option C (removing missing values) handles data quality but is completely unrelated to the gradient instability caused by differing feature ranges. Option D (changing train/test partitioning) affects evaluation reliability and overfitting risk but has no impact on the mathematical difficulty of the gradient descent process during training."
+  },
+  {
+    "id": 134,
+    "topic": "BigQuery for Scalable ML Experiment Tracking with API Access",
+    "question": "Your data science team needs to rapidly experiment with various features, model architectures, and hyperparameters. They need to track the accuracy metrics for various experiments and use an API to query the metrics over time. What should they use to track and report their experiments while minimizing manual effort?",
+    "options": {
+      "A": "Use Kubeflow Pipelines to execute the experiments. Export the metrics file, and query the results using the Kubeflow Pipelines API.",
+      "B": "Use AI Platform Training to execute the experiments. Write the accuracy metrics to BigQuery, and query the results using the BigQuery API.",
+      "C": "Use AI Platform Training to execute the experiments. Write the accuracy metrics to Cloud Monitoring, and query the results using the Monitoring API.",
+      "D": "Use AI Platform Notebooks to execute the experiments. Collect the results in a shared Google Sheets file, and query the results using the Google Sheets API."
+    },
+    "correct": "B",
+    "analogy": "Think of this like a research lab running hundreds of chemistry experiments. Instead of writing results on paper filed in a cabinet (Sheets), logging them in an equipment maintenance log (Cloud Monitoring), or saving them in a specialized notebook requiring a specific reader (Kubeflow export), the team connects each experiment instrument to a central digital database (BigQuery). Every result is automatically recorded with a timestamp, and any researcher can instantly query 'show me all experiments with accuracy above 90%' using SQL. Fast, scalable, zero manual transcription.",
+    "explanation": "BigQuery is Google Cloud's serverless, highly scalable data warehouse designed for analytical queries on structured data. By writing accuracy metrics directly from AI Platform Training jobs to BigQuery: (1) metrics are captured automatically during training with zero manual effort, (2) the BigQuery API provides powerful SQL-based querying to filter experiments by metric thresholds, time ranges, or hyperparameter values, (3) the solution scales effortlessly to thousands of experiments across a large team, and (4) integration with data visualization tools enables automated reporting. This is the most efficient, production-ready pattern for experiment tracking with API access.",
+    "why_not": "Option A (Kubeflow + export metrics) adds unnecessary manual file export steps — BigQuery enables direct, automated logging without intermediate file handling. Option C (Cloud Monitoring) is designed for infrastructure metrics (CPU, latency, errors), not ML experiment metadata; its schema and API are not optimized for querying accuracy metrics across hyperparameter combinations. Option D (Google Sheets) is manual, error-prone, and doesn't scale — Sheets has API quotas, lacks robust querying for large experiment sets, and introduces significant manual overhead, the opposite of minimizing manual effort."
+  },
+  {
+    "id": 135,
+    "topic": "Oversampling Minority Class for Imbalanced Random Forest Fraud Detection",
+    "question": "You work for a bank and are building a random forest model for fraud detection. You have a dataset that includes transactions, of which 1% are identified as fraudulent. Which data transformation strategy would likely improve the performance of your classifier?",
+    "options": {
+      "A": "Write your data in TFRecords.",
+      "B": "Z-normalize all the numeric features.",
+      "C": "Oversample the fraudulent transactions 10 times.",
+      "D": "Use one-hot encoding on all categorical features."
+    },
+    "correct": "C",
+    "analogy": "Think of this like training a dog to fetch a specific rare tennis ball (fraud) amidst thousands of regular balls. If you throw the dog into a field where 99% of the items are regular balls, the dog learns to bring back regular balls every time and gets praised for it. To teach the dog to find the rare ball, you make the rare ball much more common in the training area (oversampling) so the dog actually learns what it looks like.",
+    "explanation": "The core problem is class imbalance: 99% of the data is non-fraudulent and only 1% is fraudulent. Without intervention, a Random Forest achieves 99% accuracy simply by predicting 'Not Fraud' for every transaction — completely failing to catch actual fraud. Oversampling the minority class (fraudulent transactions) balances the dataset, forcing the model to pay equal attention to both classes and learn the decision boundaries that distinguish fraud from normal activity. This directly addresses the specific class imbalance challenge highlighted in the problem.",
+    "why_not": "Option A (TFRecords) is a storage and serialization format optimized for reading speed in TensorFlow pipelines — an engineering optimization, not a data science transformation that improves model accuracy on imbalanced classes. Option B (Z-normalization) is irrelevant for Random Forests: tree-based models determine splits based on threshold values which are invariant to scaling, unlike linear models or neural networks that require normalization. Option D (one-hot encoding) is often necessary for categorical variables but does not solve the class imbalance issue — encoding categories while leaving the 1% fraud distribution unchanged means the model remains biased toward the majority non-fraud class."
   }
 ]
