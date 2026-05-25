@@ -1950,5 +1950,155 @@
     "analogy": "Think of this like training a dog to fetch a specific rare tennis ball (fraud) amidst thousands of regular balls. If you throw the dog into a field where 99% of the items are regular balls, the dog learns to bring back regular balls every time and gets praised for it. To teach the dog to find the rare ball, you make the rare ball much more common in the training area (oversampling) so the dog actually learns what it looks like.",
     "explanation": "The core problem is class imbalance: 99% of the data is non-fraudulent and only 1% is fraudulent. Without intervention, a Random Forest achieves 99% accuracy simply by predicting 'Not Fraud' for every transaction — completely failing to catch actual fraud. Oversampling the minority class (fraudulent transactions) balances the dataset, forcing the model to pay equal attention to both classes and learn the decision boundaries that distinguish fraud from normal activity. This directly addresses the specific class imbalance challenge highlighted in the problem.",
     "why_not": "Option A (TFRecords) is a storage and serialization format optimized for reading speed in TensorFlow pipelines — an engineering optimization, not a data science transformation that improves model accuracy on imbalanced classes. Option B (Z-normalization) is irrelevant for Random Forests: tree-based models determine splits based on threshold values which are invariant to scaling, unlike linear models or neural networks that require normalization. Option D (one-hot encoding) is often necessary for categorical variables but does not solve the class imbalance issue — encoding categories while leaving the 1% fraud distribution unchanged means the model remains biased toward the majority non-fraud class."
+  },
+  {
+    "id": 136,
+    "topic": "Transfer Learning Infrastructure Cost Optimization — Daily Batch Retraining",
+    "question": "You are using transfer learning to train an image classifier based on a pre-trained EfficientNet model. Your training dataset has 20,000 images. You plan to retrain the model once per day. You need to minimize the cost of infrastructure. What platform components and configuration environment should you use?",
+    "options": {
+      "A": "A Deep Learning VM with 4 V100 GPUs and local storage.",
+      "B": "A Deep Learning VM with 4 V100 GPUs and Cloud Storage.",
+      "C": "A Google Kubernetes Engine cluster with a V100 GPU Node Pool and an NFS Server.",
+      "D": "An AI Platform Training job using a custom scale tier with 4 V100 GPUs and Cloud Storage."
+    },
+    "correct": "D",
+    "analogy": "Think of this like renting a heavy-duty construction excavator. Instead of leasing it for a full month and paying while it sits idle 23 hours a day (Options A, B, C), you rent it by the hour exactly when you need to dig. The machine is delivered, used for the job, and taken away immediately after. You only pay for the actual digging time. Cloud Storage is like the quarry where the raw materials are kept — cheap, accessible, and ready when the machine arrives.",
+    "explanation": "AI Platform Training (Vertex AI) is a fully managed, serverless service designed specifically for batch model training. When you submit a job, the platform automatically provisions the requested GPUs, executes your training code, and shuts down all compute resources the moment the job completes. This ensures you pay only for the exact training duration, with zero idle compute costs. Cloud Storage is the most cost-effective, scalable location for 20,000 images and integrates natively with the training service, eliminating data transfer fees and management overhead. This pattern directly satisfies the requirement to retrain daily while minimizing infrastructure spend.",
+    "why_not": "Option A & B (Deep Learning VMs): VMs are IaaS resources that run continuously. Even with start/stop scripts, you pay for provisioning, boot time, and risk idle costs if automation fails. They require manual infrastructure management, which contradicts cost minimization for intermittent batch workloads. Option C (GKE + NFS): GKE clusters incur baseline costs for the control plane and node pool management. Running an NFS server adds operational overhead and storage costs. This is a heavy, always-on architecture designed for continuous serving or complex microservices, not a simple daily batch job."
+  },
+  {
+    "id": 137,
+    "topic": "Missing Categorical Feature Handling — High Predictive Power",
+    "question": "While conducting an exploratory analysis of a dataset, you discover that categorical feature A has substantial predictive power, but it is sometimes missing. What should you do?",
+    "options": {
+      "A": "Drop feature A if more than 15% of values are missing. Otherwise, use feature A as-is.",
+      "B": "Compute the mode of feature A and then use it to replace the missing values in feature A.",
+      "C": "Replace the missing values with the values of the feature with the highest Pearson correlation with feature A.",
+      "D": "Add an additional class to categorical feature A for missing values. Create a new binary feature that indicates whether feature A is missing."
+    },
+    "correct": "D",
+    "analogy": "Think of this like a doctor diagnosing patients. If a crucial lab test is sometimes missing, the fact that it's missing might actually mean something — e.g., the patient skipped it because they felt healthy, or the clinic was understaffed that day. Instead of guessing the missing results based on the average patient (mode) or throwing out those patients entirely, the doctor adds a 'Test Not Performed' category and flags it. Now the diagnostic model can learn that 'missing test + other symptoms' points to a specific outcome.",
+    "explanation": "Option D is the standard best practice for handling missing categorical data when the feature has high predictive power. By adding a dedicated 'Missing' category, you preserve all samples and allow the model to learn whether the absence of data itself carries signal (e.g., users who skip certain fields may exhibit different behavior). The binary indicator explicitly captures the missingness pattern, giving the model a direct feature to weigh the impact of missing vs. observed values. This approach avoids distribution distortion, prevents data leakage, and maximizes the feature's predictive utility.",
+    "why_not": "Option A uses an arbitrary threshold to drop a highly predictive feature. Missingness is often informative (MNAR/MAR), and dropping the feature discards valuable signal and reduces model accuracy. Option B imputes with the mode, which masks the missingness pattern and biases the feature distribution. If missing values are not randomly distributed, mode imputation introduces systematic error and degrades performance. Option C is statistically invalid: Pearson correlation measures linear relationships between continuous variables. Using it to impute categorical data introduces noise, potential leakage, and mathematically unsound replacements."
+  },
+  {
+    "id": 138,
+    "topic": "Customer Segmentation — Unsupervised Clustering with BigQuery ML",
+    "question": "You work for a large retailer and have been asked to segment your customers by their purchasing habits. The purchase history of all customers has been uploaded to BigQuery. You suspect that there may be several distinct customer segments, however you are unsure of how many, and you don't yet understand the commonalities in their behavior. You want to find the most efficient solution. What should you do?",
+    "options": {
+      "A": "Create a k-means clustering model using BigQuery ML. Allow BigQuery to automatically optimize the number of clusters.",
+      "B": "Create a new dataset in Dataprep that references your BigQuery table. Use Dataprep to identify similarities within each column.",
+      "C": "Use the Data Labeling Service to label each customer record in BigQuery. Train a model on your labeled data using AutoML Tables. Review the evaluation metrics to understand whether there is an underlying pattern in the data.",
+      "D": "Get a list of the customer segments from your company's Marketing team. Use the Data Labeling Service to label each customer record and train a classification model using AutoML Tables."
+    },
+    "correct": "A",
+    "analogy": "Think of this like sorting a massive pile of mixed Lego pieces without instructions. Instead of asking someone to manually tag every piece by color and shape first (Option C), using a magnifying glass to examine one attribute at a time (Option B), or asking the marketing team what they think the groups should be (Option D), you simply dump the pieces into an automated sorting machine (BigQuery ML k-means). The machine analyzes all attributes simultaneously, groups similar pieces together, and even tells you the optimal number of bins to use. Zero manual labeling, zero data movement, instant insights.",
+    "explanation": "This is a classic unsupervised learning problem: you need to discover hidden patterns without predefined labels. K-means clustering is the standard algorithm for customer segmentation because it groups records by similarity across multiple features. BigQuery ML enables you to run k-means directly where your data lives using standard SQL — no data export, no external infrastructure, no Python code. Critically, BigQuery ML can auto-optimize the number of clusters using techniques like the elbow method or silhouette analysis, directly addressing your uncertainty about how many segments exist. This is the most efficient path from raw data to actionable segments.",
+    "why_not": "Option B (Dataprep): Dataprep is designed for interactive data cleaning and transformation, not for unsupervised clustering. Identifying similarities within each column is univariate analysis — it cannot discover multi-dimensional customer segments across purchase behavior features. Option C (Data Labeling + AutoML): This is a supervised learning workflow that requires manual labeling before training. But the prompt explicitly states you don't yet understand the commonalities — you cannot label what you haven't discovered. This approach is circular, expensive, and inefficient. Option D (Marketing team + labeling): This assumes segments already exist and are known, contradicting the exploratory nature of the task. Manual labeling at scale is slow and costly — the opposite of most efficient."
+  },
+  {
+    "id": 139,
+    "topic": "Custom Container Distributed Training — Unsupported ML Framework",
+    "question": "You recently designed and built a custom neural network that uses critical dependencies specific to your organization's framework. You need to train the model using a managed training service on Google Cloud. However, the ML framework and related dependencies are not supported by AI Platform Training. Also, both your model and your data are too large to fit in memory on a single machine. Your ML framework of choice uses the scheduler, workers, and servers distribution structure. What should you do?",
+    "options": {
+      "A": "Use a built-in model available on AI Platform Training.",
+      "B": "Build your custom container to run jobs on AI Platform Training.",
+      "C": "Build your custom containers to run distributed training jobs on AI Platform Training.",
+      "D": "Reconfigure your code to a ML framework with dependencies that are supported by AI Platform Training."
+    },
+    "correct": "C",
+    "analogy": "Think of moving a highly specialized, heavy manufacturing process to a new industrial park. You can't use the park's standard equipment (built-in models) because your process requires proprietary machinery (org-specific framework). The process is also too massive for one workshop (exceeds single-machine memory) and requires a central coordinator, assembly line stations, and quality control hubs (scheduler, workers, servers). Instead of rebuilding the entire process from scratch (Option D), you pack your proprietary machinery into standardized shipping containers, ship them to the park, and the park's logistics system automatically provisions multiple workshops and connects them exactly as you specified.",
+    "explanation": "AI Platform Training (Vertex AI Training) fully supports Bring Your Own Container (BYOC), allowing you to package your organization-specific ML framework and all custom dependencies into a Docker image. Because your workload exceeds single-machine capacity and explicitly uses a scheduler-worker-server architecture, you must leverage distributed training. Option C is the only choice that addresses both constraints: it provides the isolated environment for your unsupported dependencies while instructing the platform to orchestrate the job across multiple compute nodes automatically. This delivers a fully managed, scalable training pipeline without rewriting your code.",
+    "why_not": "Option A ignores the explicit requirement to use your custom framework. Built-in models only support a fixed set of pre-configured algorithms and cannot accommodate organization-specific dependencies. Option B solves the dependency issue with a custom container but fails to address the distributed requirement — running a single-machine job will crash due to memory limits and cannot leverage the scheduler-worker-server architecture. Option D suggests rewriting your code to a supported framework, which is highly inefficient, introduces migration risk, and completely negates the value of your existing custom framework when a native solution already exists."
+  },
+  {
+    "id": 140,
+    "topic": "Input Pipeline Optimization — Parallel Interleave for Multi-File Datasets",
+    "question": "While monitoring your model training's GPU utilization, you discover that you have a native synchronous implementation. The training data is split into multiple files. You want to reduce the execution time of your input pipeline. What should you do?",
+    "options": {
+      "A": "Increase the CPU load.",
+      "B": "Add caching to the pipeline.",
+      "C": "Increase the network bandwidth.",
+      "D": "Add parallel interleave to the pipeline."
+    },
+    "correct": "D",
+    "analogy": "Think of this like a restaurant kitchen (GPU) that keeps waiting for ingredients. Currently, one chef (synchronous loader) walks to the pantry, grabs one ingredient jar, brings it back, then goes for the next — the kitchen sits idle during each trip. With parallel interleave, you hire multiple chefs who simultaneously fetch different jars from different pantry shelves. The kitchen never waits; ingredients arrive continuously. Same pantry, same recipes — just parallel fetching.",
+    "explanation": "A synchronous input pipeline processes files sequentially: load File 1 → preprocess → feed GPU → load File 2 → ... This creates GPU idle time while waiting for I/O. Parallel interleave (tf.data.Dataset.interleave with num_parallel_calls=AUTOTUNE) reads from multiple files concurrently, overlapping disk I/O with GPU computation. Since your data is already split into multiple files, this transformation directly exploits that structure to keep the GPU saturated, reducing end-to-end training time without changing model code or infrastructure.",
+    "why_not": "Option A (Increase CPU load): Adding more CPU work would worsen the bottleneck, not fix it. The issue is I/O blocking, not insufficient CPU computation. Option B (Add caching): Caching stores processed data in memory for reuse across epochs. It helps when re-reading the same data but does not solve the initial synchronous loading bottleneck for the first pass or streaming workloads. Option C (Increase network bandwidth): This may help if files are remote, but the root cause is the sequential reading pattern. Even with infinite bandwidth, synchronous loading leaves the GPU waiting. Parallel interleave solves the algorithmic inefficiency directly in code."
+  },
+  {
+    "id": 141,
+    "topic": "PyTorch Hyperparameter Tuning — Custom Containers on AI Platform",
+    "question": "Your data science team is training a PyTorch model for image classification based on a pre-trained ResNet model. You need to perform hyperparameter tuning to optimize for several parameters. What should you do?",
+    "options": {
+      "A": "Convert the model to a Keras model, and run a Keras Tuner job.",
+      "B": "Run a hyperparameter tuning job on AI Platform using custom containers.",
+      "C": "Create a Kubeflow Pipelines instance, and run a hyperparameter tuning job on Katib.",
+      "D": "Convert the model to a TensorFlow model, and run a hyperparameter tuning job on AI Platform."
+    },
+    "correct": "B",
+    "analogy": "Think of this like tuning a high-performance race car engine. Options A & D are like dismantling your engine and rebuilding it as a lawnmower engine just because the local shop has a specific tool for lawnmowers — unnecessary work that risks breaking the original design. Option C is like building your own tuning workshop from scratch just to run one session. Option B is like driving your car to a specialized professional tuning center (AI Platform) that accepts custom vehicles. You tell them what to optimize, they use their automated machinery to run the tests, and you get the results without managing the facility yourself.",
+    "explanation": "AI Platform (Vertex AI) provides a fully managed Hyperparameter Tuning service that integrates directly with the Training service. Since PyTorch is a custom framework, the standard cloud-native pattern is to package your PyTorch code and dependencies into a Custom Docker Container. By submitting this container to AI Platform with a hyperparameter configuration, the service automatically orchestrates the trials, scales the compute resources as needed, and reports the best parameters. This minimizes manual infrastructure management while supporting your specific framework.",
+    "why_not": "Options A & D (Model Conversion): Converting a PyTorch model to Keras or TensorFlow adds significant development overhead, introduces conversion risks, and is unnecessary — Google Cloud supports PyTorch directly via containers. Option C (Kubeflow + Katib): While Katib is a valid HPT tool, creating a Kubeflow Pipelines instance implies provisioning and managing a Kubernetes cluster (GKE) and the Kubeflow control plane, introducing excessive operational overhead for a single tuning task compared to the managed AI Platform service."
+  },
+  {
+    "id": 142,
+    "topic": "Text Classification Pipeline — AutoML Natural Language for Support Cases",
+    "question": "You have a large corpus of written support cases that can be classified into 3 separate categories: Technical Support, Billing Support, or Other Issues. You need to quickly build, test, and deploy a service that will automatically classify future written requests into one of the categories. How should you configure the pipeline?",
+    "options": {
+      "A": "Use the Cloud Natural Language API to obtain metadata to classify the incoming cases.",
+      "B": "Use AutoML Natural Language to build and test a classifier. Deploy the model as a REST API.",
+      "C": "Use BigQuery ML to build and test a logistic regression model to classify incoming requests. Use BigQuery ML to perform inference.",
+      "D": "Create a TensorFlow model using Google's BERT pre-trained model. Build and test a classifier, and deploy the model using Vertex AI."
+    },
+    "correct": "B",
+    "analogy": "Think of this like hiring a new customer service agent. Instead of giving them a generic language textbook and hoping they guess your specific ticket categories (Option A), asking them to manually write rules in SQL (Option C), or requiring them to get a PhD in linguistics before starting (Option D), you simply show them 100 labeled examples of past tickets and say 'Learn from these.' AutoML Natural Language is that fast learner — you provide examples, it builds the classifier, tests it, and deploys it as an API endpoint ready to handle live requests. Same outcome, zero custom code, minimal time.",
+    "explanation": "AutoML Natural Language is a fully managed, no-code service designed specifically for custom text classification tasks. You upload your labeled support cases, and the service automatically handles tokenization, feature engineering, model architecture search (including BERT-based models), hyperparameter tuning, evaluation, and deployment to a scalable REST API endpoint. This requires zero ML code, minimal data preprocessing, and delivers production-ready latency — directly matching the requirement to quickly build, test, and deploy.",
+    "why_not": "Option A (Cloud Natural Language API): Provides pre-trained models for generic tasks (sentiment, entity recognition, predefined content categories). It cannot learn your business-specific taxonomy (Technical/Billing/Other) without custom training — which it does not support. Option C (BigQuery ML logistic regression): Requires manual feature engineering (e.g., TF-IDF vectors via SQL), lacks advanced NLP architectures like transformers, and is optimized for structured data analytics — not rapid iteration on unstructured text. Option D (Custom BERT + Vertex AI): Offers maximum flexibility but requires writing training code, managing tokenization, and configuring deployment infrastructure — contradicts the 'quickly' requirement when a managed alternative exists."
+  },
+  {
+    "id": 143,
+    "topic": "Custom Sentiment Classification — AutoML No-Code with Limited Data",
+    "question": "You need to quickly build and train a model to predict the sentiment of customer reviews with custom categories without writing code. You do not have enough data to train a model from scratch. The resulting model should have high predictive performance. Which service should you use?",
+    "options": {
+      "A": "AutoML Natural Language",
+      "B": "Cloud Natural Language API",
+      "C": "AI Hub pre-made Jupyter Notebooks",
+      "D": "AI Platform Training built-in algorithms"
+    },
+    "correct": "A",
+    "analogy": "Think of this like teaching a new employee to sort customer feedback. Instead of giving them a generic dictionary and hoping they guess your specific sentiment labels (Option B), handing them a blank notebook and saying 'figure it out from scratch' (Option C), or requiring them to attend a 6-month linguistics course (Option D), you simply show them 50 labeled examples of past reviews and say 'Learn the pattern.' AutoML Natural Language is that quick learner — you upload examples, it automatically builds a high-performance model using transfer learning, and deploys it with zero code.",
+    "explanation": "AutoML Natural Language is purpose-built for this exact scenario: custom text classification with limited data and no code. It leverages transfer learning from pre-trained language models (like BERT) to achieve high accuracy even with small datasets (~100 examples per class). The service automatically handles data preprocessing, model architecture selection, hyperparameter tuning, and deployment to a scalable endpoint — all through a simple web UI or API. You define your custom sentiment categories, upload labeled reviews, and get a production-ready model without writing a single line of code.",
+    "why_not": "Option B (Cloud Natural Language API): Provides pre-trained sentiment analysis with fixed categories (positive/negative/neutral). It cannot be trained on your custom sentiment taxonomy — you cannot teach it your business-specific labels. Option C (AI Hub Jupyter Notebooks): Requires writing and executing Python code, directly contradicting the 'without writing code' requirement. Also demands manual model training and deployment steps. Option D (AI Platform built-in algorithms): Requires code to configure training jobs, lacks specialized NLP architectures for small-data transfer learning, and is designed for structured/tabular data — not custom text classification with limited samples."
+  },
+  {
+    "id": 144,
+    "topic": "Profile Photo Compliance — Minimizing False Positives via Class Oversampling",
+    "question": "You need to build an ML model for a social media application to predict whether a user's submitted profile photo meets the requirements. The application will inform the user if the picture meets the requirements. How should you build a model to ensure that the application does not falsely accept a non-compliant picture?",
+    "options": {
+      "A": "Use AutoML to optimize the model's recall in order to minimize false negatives.",
+      "B": "Use AutoML to optimize the model's F1 score in order to balance the accuracy of false positives and false negatives.",
+      "C": "Use Vertex AI Workbench user-managed notebooks to build a custom model that has three times as many examples of pictures that meet the profile photo requirements.",
+      "D": "Use Vertex AI Workbench user-managed notebooks to build a custom model that has three times as many examples of pictures that do not meet the profile photo requirements."
+    },
+    "correct": "D",
+    "analogy": "Think of this like a strict bouncer at an exclusive club. The bouncer's #1 rule: 'Never let in someone who doesn't belong.' If the bouncer is unsure, they err on the side of caution and turn the person away — even if that person actually was on the list. To train this bouncer, you show them many more examples of people who don't belong (fake IDs, wrong attire) than people who do. Now the bouncer is highly sensitive to red flags and rarely makes the mistake of admitting the wrong person. That's exactly what oversampling non-compliant photos achieves.",
+    "explanation": "The business requirement is to minimize false positives: the model must not incorrectly classify a non-compliant photo as compliant. A False Positive means a non-compliant photo is predicted 'Compliant' — the bad photo gets accepted (unacceptable). A False Negative means a compliant photo is predicted 'Non-compliant' — the user resubmits (acceptable friction). Option D addresses this by oversampling the negative class (non-compliant photos), biasing the model to be more conservative. It learns richer representations of what 'non-compliant' looks like and becomes less likely to mistakenly approve a bad photo.",
+    "why_not": "Option A (Optimize recall): Recall minimizes false negatives (rejecting good photos). Optimizing for recall increases false positives — the exact opposite of the goal. This would let more non-compliant photos through. Option B (Optimize F1): F1 balances precision and recall equally. The requirement is not to balance errors but to prioritize avoiding false positives specifically — F1 optimization does not enforce this asymmetric business constraint. Option C (Oversample compliant photos): This biases the model toward predicting 'compliant,' which increases false positives. The model would become more lenient, accepting more non-compliant photos — directly violating the core requirement."
+  },
+  {
+    "id": 145,
+    "topic": "Cost Reduction for Long-Running Training — Preemptible VMs with Checkpoints",
+    "question": "You lead a data science team at a large international corporation. Most of the models your team trains are large-scale models using high-level TensorFlow APIs on AI Platform with GPUs. Your team usually takes a few weeks or months to iterate on a new version of a model. You were recently asked to review your team's spending. How should you reduce your Google Cloud compute costs without impacting the model's performance?",
+    "options": {
+      "A": "Use AI Platform to run distributed training jobs with checkpoints.",
+      "B": "Use AI Platform to run distributed training jobs without checkpoints.",
+      "C": "Migrate to training with Kubeflow on Google Kubernetes Engine, and use preemptible VMs with checkpoints.",
+      "D": "Migrate to training with Kubeflow on Google Kubernetes Engine, and use preemptible VMs without checkpoints."
+    },
+    "correct": "C",
+    "analogy": "Think of this like running a cross-country road trip. Instead of paying full price for a luxury sedan you keep parked most of the time (Option A), removing the spare tire to save weight but risking being stranded (Option B), or renting a cheap interruptible car but refusing to save GPS progress so you restart from the beginning every time (Option D), you rent a heavily discounted interruptible car (preemptible VM) equipped with an automatic save-point system (checkpoints). Every 30 minutes your progress is saved. If the car gets recalled (preempted), you grab the next discount car and resume exactly where you left off. Same destination, 80% cheaper, zero lost progress.",
+    "explanation": "Preemptible VMs offer up to 80% cost savings compared to standard compute instances but can be terminated by Google Cloud at any time. For training jobs that run weeks or months, preemptions are inevitable. Checkpoints solve this by periodically saving the model state to persistent storage. When a preemptible VM is terminated, Kubeflow orchestrates the job to restart on a new preemptible VM and resume from the last checkpoint — ensuring no training progress is lost. Kubeflow on GKE provides the orchestration layer needed to manage this distributed, fault-tolerant workflow at scale.",
+    "why_not": "Option A (AI Platform + distributed + checkpoints): Distributed training accelerates wall-clock time but increases hourly spend (more GPUs). Checkpoints add reliability but don't reduce base compute costs — this maintains the status quo rather than optimizing spend. Option B (AI Platform + distributed + no checkpoints): Removing checkpoints for multi-week jobs is extremely risky. A single hardware failure could waste weeks of compute and delay iteration — potentially increasing total cost due to rework. Option D (Kubeflow + preemptible + no checkpoints): You get cost savings of preemptible VMs but lose all progress on preemption. For long-running jobs, repeated restarts from scratch waste money and severely impact iteration time — directly contradicting 'without impacting performance.'"
   }
 ]
