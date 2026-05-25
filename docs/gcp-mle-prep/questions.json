@@ -1348,5 +1348,156 @@
     "analogy": "Think of this like a security checkpoint at an office building. Every time an employee (new code) swipes their badge to enter (pushes to the branch), a guard (Cloud Build) automatically stops them to run a quick safety check (unit tests). You don't need to call the guard manually every time (Option A), or set up a complex system of mirrors and alarm relays to eventually signal the guard (Options C and D). You simply program the turnstile to trigger the guard immediately upon every entry — direct, automatic, and reliable.",
     "explanation": "Cloud Build is Google Cloud's native CI/CD service designed specifically to react to source code changes. By creating a Cloud Build trigger linked to Cloud Source Repositories, the service automatically detects every push to your development branch, spins up a build environment, installs your custom library dependencies, executes the unit tests, and reports results — all without any manual intervention. This is the standard, most efficient GCP pattern for automated testing pipelines and is purpose-built for exactly this use case.",
     "why_not": "Option A requires a custom script to be manually run or externally scheduled by the developer on every push — this is not an event-driven pipeline and reintroduces the manual overhead that CI/CD is meant to eliminate. Option C routes repository events through Cloud Logging sinks to Pub/Sub, then to Cloud Run — a complex, multi-hop anti-pattern that adds failure points and maintenance burden when Cloud Build already has native, direct integration with Cloud Source Repositories. Option D uses Cloud Functions triggered via Logging sinks and Pub/Sub, which adds similar unnecessary indirection; Cloud Functions also have strict execution time limits and are poorly suited for installing custom libraries and running full test suites compared to Cloud Build's purpose-built container-based build environment."
+  },
+  {
+    "id": 96,
+    "topic": "Continuous Evaluation for Deployed Model Versions",
+    "question": "You have deployed multiple versions of an image classification model on AI Platform. You want to monitor the performance of the model versions over time.\n\nHow should you perform this comparison?",
+    "options": {
+      "A": "Compare the loss performance for each model on a held-out dataset.",
+      "B": "Compare the loss performance for each model on the validation data.",
+      "C": "Compare the receiver operating characteristic (ROC) curve for each model using the What-If Tool.",
+      "D": "Compare the mean average precision across the models using the Continuous Evaluation feature."
+    },
+    "correct": "D",
+    "analogy": "Think of this like comparing two chefs who are both cooking the same dish in a busy restaurant kitchen. You don't taste-test their practice meals from last week (held-out or validation data) or ask them to explain their technique in an interview (What-If Tool). Instead, you secretly tag live customer orders, send them to both chefs, and have diners rate the final plates. Over time, you track which chef consistently earns higher ratings on real meals served to real customers. That's Continuous Evaluation.",
+    "explanation": "Continuous Evaluation is a Vertex AI feature specifically designed for monitoring deployed models in production. It automatically compares model predictions against ground truth labels collected from live traffic, computing production-relevant metrics like mean average precision (mAP) for image classification tasks. This enables ongoing, automated comparison of multiple deployed model versions using real-world data — exactly what's needed to track performance drift over time, validate new versions, and make data-driven promotion decisions.",
+    "why_not": "Options A and B rely on static held-out or validation datasets evaluated during development — these reflect past performance conditions, not how models actually behave on live, evolving production data over time. Option C uses the What-If Tool, which is designed for interactive, manual exploration and debugging of individual model behavior — not for automated, continuous monitoring of deployed endpoints at production scale across multiple versions."
+  },
+  {
+    "id": 97,
+    "topic": "TensorFlow Serving Input Shape Matching",
+    "question": "You trained a text classification model. The SignatureDef shows the input tensor has dtype DT_STRING and shape (-1, 2), meaning each instance must contain exactly 2 strings. You started a TensorFlow Serving server and are sending HTTP prediction requests.\n\nWhat is the correct way to write the predict request?",
+    "options": {
+      "A": "data = json.dumps({\"signature_name\": \"seving_default\", \"instances\": [['ab', 'bc', 'cd']]})",
+      "B": "data = json.dumps({\"signature_name\": \"serving_default\", \"instances\": [['a', 'b', 'c', 'd', 'e', 'f']]})",
+      "C": "data = json.dumps({\"signature_name\": \"serving_default\", \"instances\": [['a', 'b', 'c'], ['d', 'e', 'f']]})",
+      "D": "data = json.dumps({\"signature_name\": \"serving_default\", \"instances\": [['a', 'b'], ['c', 'd'], ['e', 'f']]})"
+    },
+    "correct": "D",
+    "analogy": "Think of this like ordering sandwiches at a deli where every order must be exactly 2 items — 'turkey + cheese' or 'ham + mustard.' You can't order 1 item, 3 items, or a giant platter of 6. If you want to place 3 separate orders, you submit: [['turkey','cheese'], ['ham','mustard'], ['roast','beef']]. Each order is a pair. That's exactly what the model expects: a batch of instances, each containing exactly 2 strings.",
+    "explanation": "The input signature specifies shape (-1, 2): the model accepts a variable batch size (-1) where each individual instance must contain exactly 2 string elements. Option D provides 3 instances — ['a','b'], ['c','d'], and ['e','f'] — each with exactly 2 strings, perfectly matching the required input shape. The request also correctly spells the signature name as 'serving_default' and uses the standard TensorFlow Serving 'instances' key for row-format inputs.",
+    "why_not": "Option A has a typo in the signature name ('seving_default' missing the 'r') and provides one instance with 3 strings instead of 2 — a double failure. Option B provides one instance containing 6 strings; since each instance must have exactly 2 strings per the (-1, 2) shape constraint, this causes a shape mismatch error. Option C provides 2 instances but each contains 3 strings — again violating the required second dimension of exactly 2."
+  },
+  {
+    "id": 98,
+    "topic": "Large-Scale Call Center Sentiment Pipeline",
+    "question": "Your organization's call center has asked you to develop a model that analyzes customer sentiments in each call. The call center receives over one million calls daily, and data is stored in Cloud Storage. The data collected must not leave the region in which the call originated, and no Personally Identifiable Information (PII) can be stored or analyzed. The data science team has a third-party tool for visualization and access which requires a SQL ANSI-2011 compliant interface.\n\nHow should the data pipeline be designed?\n\nA. 1=Dataflow, 2=BigQuery\nB. 1=Pub/Sub, 2=Datastore\nC. 1=Dataflow, 2=Cloud SQL\nD. 1=Cloud Function, 2=Cloud SQL",
+    "options": {
+      "A": "1=Dataflow, 2=BigQuery",
+      "B": "1=Pub/Sub, 2=Datastore",
+      "C": "1=Dataflow, 2=Cloud SQL",
+      "D": "1=Cloud Function, 2=Cloud SQL"
+    },
+    "correct": "A",
+    "analogy": "Think of this like processing mail at a massive post office handling 1 million letters daily. You need to read handwritten letters (Speech-to-Text), black out sensitive addresses (Cloud DLP), and store results for reporting. You wouldn't use a single clerk reading letters one by one (Cloud Functions) or a small filing cabinet (Cloud SQL). Instead, you deploy an automated sorting facility (Dataflow) that processes thousands of letters simultaneously, then archive everything in a massive searchable library (BigQuery) where analysts can run complex SQL reports.",
+    "explanation": "Dataflow is the correct choice for the processing component because it handles massive scale (1 million calls per day) with automatic horizontal parallelization, integrates natively with the Speech-to-Text API for transcription and Cloud DLP API for PII redaction before storage, supports regional data processing constraints, and provides exactly-once processing guarantees. BigQuery is ideal for the analytics component because it is fully ANSI-2011 SQL compliant (meeting the visualization tool requirement), scales to petabyte-level analytics without management overhead, and supports regional data residency through dataset-level location settings.",
+    "why_not": "Option B uses Pub/Sub as a processing component (it is a messaging queue, not a data processor) and Datastore (a NoSQL key-value database that does not support ANSI SQL), failing both the processing and SQL interface requirements simultaneously. Option C pairs Dataflow with Cloud SQL, but Cloud SQL is a relational OLTP database designed for transactional workloads — it cannot efficiently store or query millions of sentiment records per day at this analytical scale. Option D uses Cloud Functions, which have 9-minute maximum execution time limits and resource constraints that make them unsuitable for processing 1 million calls daily; Cloud SQL again lacks the required analytical performance."
+  },
+  {
+    "id": 99,
+    "topic": "Collaborative Filtering for Product Recommendations",
+    "question": "You are an ML engineer at a global shoe store. You manage the ML models for the company's website. You are asked to build a model that will recommend new products to the user based on their purchase behavior and similarity with other users.\n\nWhat should you do?",
+    "options": {
+      "A": "Build a classification model.",
+      "B": "Build a knowledge-based filtering model.",
+      "C": "Build a collaborative-based filtering model.",
+      "D": "Build a regression model using the features as predictors."
+    },
+    "correct": "C",
+    "analogy": "Think of this like a book club where members recommend reads to each other. Instead of guessing what you might like based on book genres alone (knowledge-based) or predicting whether you'll like or dislike a specific book (classification), the club leader notices: 'You and Sarah both loved mystery novels and historical fiction. Sarah just finished a new thriller — you'll probably love it too!' That's collaborative filtering: recommendations powered by 'people like you' behavioral patterns, not just item features or binary predictions.",
+    "explanation": "The requirement explicitly states recommendations should be based on user purchase behavior and similarity with other users — this is the textbook definition of collaborative filtering. Collaborative filtering identifies users with similar purchase histories and recommends items those similar users engaged with but the target user hasn't yet encountered. It scales well for e-commerce, requires no manual feature engineering about product attributes, and naturally personalizes recommendations based on real behavioral patterns across the entire user base.",
+    "why_not": "Option A (classification) predicts discrete labels such as 'will purchase / won't purchase' for a specific item — it does not generate a ranked, personalized list of new product recommendations across a catalog. Option B (knowledge-based filtering) relies on explicit rules about item attributes and user-stated preferences (e.g., 'if user buys running shoes, recommend running socks') but ignores the powerful behavioral signal of similarity with other users. Option D (regression) predicts continuous numerical values such as expected spend amount — entirely the wrong task formulation for generating a set of personalized product recommendations."
+  },
+  {
+    "id": 100,
+    "topic": "Precision-Recall Threshold Tradeoff",
+    "question": "You work for a social media company. You need to detect whether posted images contain cars. You have trained an object detection neural network and deployed the model version to AI Platform Prediction for evaluation. You notice that the precision is lower than your business requirements allow.\n\nHow should you adjust the model's final layer softmax threshold to increase precision?",
+    "options": {
+      "A": "Increase the recall.",
+      "B": "Decrease the recall.",
+      "C": "Increase the number of false positives.",
+      "D": "Decrease the number of false negatives."
+    },
+    "correct": "B",
+    "analogy": "Think of this like a bouncer at an exclusive club checking IDs. If the bouncer lets in anyone who looks 'maybe 21+' (low threshold), they admit many underage people (false positives) — precision is low. To improve precision, the bouncer raises the standard: 'You must clearly look over 21.' Now fewer fake IDs slip through (higher precision), but some legitimate 21-year-olds get turned away (lower recall). You trade catching everyone for catching only the right people — that's the precision-recall tradeoff.",
+    "explanation": "Precision = True Positives / (True Positives + False Positives). To increase precision, you must reduce false positives — cases where the model incorrectly predicts 'car present.' Raising the softmax threshold makes the model more conservative: it only predicts 'car' when confidence is very high, filtering out uncertain predictions that are likely wrong. This directly reduces false positives and boosts precision. The inevitable side effect is that some true car images with moderate confidence scores are now missed — recall decreases. Option B correctly identifies this required consequence of raising the decision threshold.",
+    "why_not": "Option A (increase recall) requires lowering the threshold to catch more true positives, which simultaneously increases false positives and directly reduces precision — the exact opposite of the goal. Option C (increase false positives) explicitly harms precision by adding more incorrect positive predictions to the denominator of the Precision formula — this makes precision worse, not better. Option D (decrease false negatives) also requires lowering the threshold to catch more true cars, which increases false positives and lowers precision — counterproductive for this business requirement."
+  },
+  {
+    "id": 101,
+    "topic": "Codeless ETL with Cloud Data Fusion",
+    "question": "You are responsible for building a unified analytics environment across a variety of on-premises data marts. Your company is experiencing data quality and security challenges caused by a wide range of disconnected tools and temporary solutions. You need a fully managed, cloud-native data integration service that will lower the total cost of work and reduce repetitive work. Some members on your team prefer a codeless interface for building Extract, Transform, Load (ETL) pipelines.\n\nWhich service should you use?",
+    "options": {
+      "A": "Dataflow",
+      "B": "Dataprep",
+      "C": "Apache Flink",
+      "D": "Cloud Data Fusion"
+    },
+    "correct": "D",
+    "analogy": "Think of this like connecting multiple small kitchens (on-premises data marts) to a central restaurant supply hub. Instead of hiring chefs who each write their own recipes in different programming languages (code-heavy tools), or giving everyone a basic knife and hoping they coordinate (disconnected solutions), you install a smart visual kitchen automation system. Staff drag and drop ingredients onto a canvas, set transformation rules with buttons, and the system automatically handles sourcing, cleaning, and delivery — no coding required, fully managed, and compatible with existing kitchen equipment.",
+    "explanation": "Cloud Data Fusion is a fully managed, cloud-native data integration service built on CDAP that provides a codeless, drag-and-drop GUI for designing, deploying, and managing ETL and ELT pipelines. It natively supports hybrid connectivity to on-premises data sources, enforces security and data quality policies centrally, and eliminates repetitive pipeline coding through reusable templates and a rich plugin ecosystem. This directly addresses all requirements: fully managed (low operational overhead), codeless interface (team preference), cloud-native scalability, and reduced total cost through standardized visual pipeline development.",
+    "why_not": "Option A (Dataflow) is a powerful managed stream and batch processing service but requires writing code in Apache Beam (Java or Python) — it does not provide a codeless interface for ETL development. Option B (Dataprep) offers a visual, codeless interface but is designed for interactive data cleaning and preparation for analysis, not for orchestrating enterprise-scale production ETL pipelines across hybrid on-premises and cloud environments. Option C (Apache Flink) is an open-source stream processing framework — not a managed Google Cloud service, requires significant coding expertise and infrastructure self-management, the opposite of 'fully managed' and 'codeless.'"
+  },
+  {
+    "id": 102,
+    "topic": "Responsible ML in Regulated Insurance Decisions",
+    "question": "You are an ML engineer at a regulated insurance company. You are asked to develop an insurance approval model that accepts or rejects insurance applications from potential customers.\n\nWhat factors should you consider before building the model?",
+    "options": {
+      "A": "Redaction, reproducibility, and explainability",
+      "B": "Traceability, reproducibility, and explainability",
+      "C": "Federated learning, reproducibility, and explainability",
+      "D": "Differential privacy, federated learning, and explainability"
+    },
+    "correct": "B",
+    "analogy": "Think of this like a judge issuing a legal ruling. The judge cannot just say 'denied' — they must document every piece of evidence reviewed (traceability), apply the law consistently so the same case would get the same ruling if retried by another judge (reproducibility), and clearly explain the legal reasoning so the defendant understands why they lost and can appeal (explainability). In regulated decisions, you are the judge — and auditors, regulators, and applicants are always watching.",
+    "explanation": "In regulated industries like insurance, model decisions directly impact people's financial lives and trigger legal accountability requirements. Traceability ensures full auditability: every decision can be traced back to the specific data, features, and model version that produced it — critical for regulatory investigations. Reproducibility guarantees that results can be independently re-generated and verified during compliance audits. Explainability is legally mandated in many jurisdictions (GDPR Article 22, fair lending laws, insurance regulations) — you must be able to tell applicants specifically why they were approved or denied in understandable terms.",
+    "why_not": "Option A includes redaction, which is useful for PII handling in data preprocessing but is not a core model-building requirement for regulatory compliance in approval decisions. Option C includes federated learning, a privacy-preserving technique useful when training data cannot leave distributed devices — not applicable to an insurance company processing centralized application data, and it doesn't address the mandatory auditability requirements. Option D combines differential privacy and federated learning, both valuable privacy techniques but secondary concerns; they do not address the mandatory traceability and reproducibility requirements that regulators specifically audit."
+  },
+  {
+    "id": 103,
+    "topic": "tf.data Optimization for Input-Bound TPU Training",
+    "question": "You are training a ResNet model on AI Platform using TPUs to visually categorize types of defects in automobile engines. You capture the training profile using the Cloud TPU profiler plugin and observe that it is highly input-bound. You want to reduce the bottleneck and speed up your model training process.\n\nWhich TWO modifications should you make to the tf.data dataset?",
+    "options": {
+      "A": "Use the interleave option for reading data.",
+      "B": "Reduce the value of the repeat parameter.",
+      "C": "Increase the buffer size for the shuffle option.",
+      "D": "Set the prefetch option equal to the training batch size.",
+      "E": "Decrease the batch size argument in your transformation."
+    },
+    "correct": "AD",
+    "analogy": "Think of this like a high-speed assembly line (TPU) that keeps stopping because parts aren't arriving fast enough (input-bound). To fix this, you open multiple delivery lanes so trucks can unload simultaneously instead of waiting in one line (interleave), and you set up a staging area where the next batch of parts is pre-loaded and ready the moment the assembly line needs them (prefetch). You don't slow down the assembly line (reduce batch size) or make fewer products overall (reduce repeat/epochs) — you fix the supply chain that's causing the bottleneck.",
+    "explanation": "When a TPU training job is input-bound, the accelerator spends time idle waiting for data rather than computing. Two critical tf.data optimizations address this directly. Option A (interleave): reads from multiple data files in parallel, dramatically increasing I/O throughput when the dataset spans many sharded files. Instead of sequentially reading one file at a time, interleave opens multiple files concurrently and merges their elements, keeping the data pipeline continuously saturated. Option D (prefetch): overlaps data preprocessing and model execution by loading and preparing the next batch in the background while the current batch is being processed by the TPU. Setting prefetch equal to batch size or using tf.data.AUTOTUNE ensures batches are always queued and ready, eliminating TPU idle time.",
+    "why_not": "Option B (reduce repeat) only decreases the number of training epochs — it reduces total training time by doing less training, not by improving data loading speed or throughput. Option C (increase shuffle buffer) improves data randomization quality but adds memory overhead and can actually increase input latency by requiring a large buffer to be filled before training proceeds — potentially worsening an input bottleneck. Option E (decrease batch size) increases the number of iterations per epoch and adds per-batch I/O overhead, which is counterproductive for TPUs that are specifically optimized for processing large batches in parallel."
+  },
+  {
+    "id": 104,
+    "topic": "High-Throughput Preprocessing with Dataflow at Serving Time",
+    "question": "You have trained a model on a dataset that required computationally expensive preprocessing operations. You need to execute the same preprocessing at prediction time. You deployed the model on AI Platform for high-throughput online prediction.\n\nWhich architecture should you use?",
+    "options": {
+      "A": "Validate the accuracy of the model trained on preprocessed data. Create a new model that uses raw data and is available in real time. Deploy the new model onto AI Platform for online prediction.",
+      "B": "Send incoming prediction requests to a Pub/Sub topic. Transform the incoming data using a Dataflow job. Submit a prediction request to AI Platform using the transformed data. Write the predictions to an outbound Pub/Sub queue.",
+      "C": "Stream incoming prediction request data into Cloud Spanner. Create a view to abstract your preprocessing logic. Query the view every second for new records. Submit a prediction request to AI Platform using the transformed data. Write the predictions to an outbound Pub/Sub queue.",
+      "D": "Send incoming prediction requests to a Pub/Sub topic. Set up a Cloud Function that is triggered when messages are published to the Pub/Sub topic. Implement your preprocessing logic in the Cloud Function. Submit a prediction request to AI Platform using the transformed data. Write the predictions to an outbound Pub/Sub queue."
+    },
+    "correct": "B",
+    "analogy": "Think of this like a professional photo lab that develops film. The chemical development process is complex and takes time (expensive preprocessing). You don't ask each customer to develop their own film at home (Cloud Function with limits), rebuild the camera entirely to skip development (retrain on raw data), or store undeveloped film in a vault and check it once per second (Spanner polling). Instead, you set up an automated conveyor belt (Dataflow) that takes film from the drop-off counter (Pub/Sub), runs it through all the chemical baths at industrial scale in parallel, then sends the developed photos to the printer (AI Platform) — high throughput, zero bottlenecks.",
+    "explanation": "When preprocessing is computationally expensive and must be replicated exactly at prediction time, the serving architecture needs to scale preprocessing independently from model inference. Option B uses Dataflow, a fully managed horizontally scalable data processing service, to handle heavy transformations in parallel across many workers. Pub/Sub decouples request ingestion from processing, providing buffering during traffic spikes. This pipeline ensures identical preprocessing logic as training (via shared reusable Dataflow code), high-throughput handling, low-latency predictions by keeping AI Platform focused solely on inference, and operational reliability with managed autoscaling.",
+    "why_not": "Option A requires retraining the entire model on raw data, which may be infeasible due to cost, training time, or performance constraints — and doesn't reuse the existing trained model that already works on preprocessed inputs. Option C uses Cloud Spanner, a globally-distributed transactional database, for preprocessing logic via SQL views — overkill and expensive for ETL; polling every second introduces unacceptable latency spikes and completely fails to scale for high-throughput workloads. Option D relies on Cloud Functions for computationally expensive preprocessing, but Functions have strict resource limits (CPU, memory, max 9-minute execution time) and cold-start latency — these constraints cause timeouts and prediction failures under high throughput."
+  },
+  {
+    "id": 105,
+    "topic": "Data Drift Monitoring and Adaptive Retraining",
+    "question": "Your team trained and tested a DNN regression model with good results. Six months after deployment, the model is performing poorly due to a change in the distribution of the input data.\n\nHow should you address the input differences in production?",
+    "options": {
+      "A": "Create alerts to monitor for skew, and retrain the model.",
+      "B": "Perform feature selection on the model, and retrain the model with fewer features.",
+      "C": "Retrain the model, and select an L2 regularization parameter with a hyperparameter tuning service.",
+      "D": "Perform feature selection on the model, and retrain the model on a monthly basis with fewer features."
+    },
+    "correct": "A",
+    "analogy": "Think of this like a weather app that perfectly predicted rain last winter. When summer arrives, the patterns change — humidity means something different, wind directions shift, and the app starts giving wrong forecasts. You don't remove weather sensors (feature selection) or tweak the algorithm's sensitivity to noise (regularization). Instead, you install a monitor that alerts you when current weather patterns drift significantly from the historical norms the model learned, then retrain on recent summer data. The app adapts to the new seasonal reality.",
+    "explanation": "The performance decline is caused by data drift (also called training-serving skew): the statistical distribution of production input features has shifted from what the model was trained on. The correct production-ready response has two parts: first, implement automated monitoring for feature skew using Vertex AI Model Monitoring or TensorFlow Data Validation, which compares incoming data distributions against the training baseline and fires alerts when drift exceeds defined thresholds. Second, trigger a retraining pipeline when those alerts fire, updating the model on recent data that reflects the new distribution. This ensures continuous adaptation to evolving data patterns.",
+    "why_not": "Option B (feature selection) removes input features but does not address the root cause — the remaining features still have shifted distributions, so the model will continue to perform poorly on the same underlying problem. Option C (L2 regularization tuning) is a technique for reducing overfitting during training — it has no effect on distribution shift that occurs in production after deployment, and hyperparameter tuning on old data will not fix a model receiving new distribution data. Option D combines the flaws of Option B with arbitrary fixed-schedule monthly retraining: removing features doesn't help, and retraining on a calendar schedule wastes resources when data is stable and may miss critical drift events that occur between scheduled runs."
   }
 ]
