@@ -84,7 +84,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
   position:relative;overflow:hidden;transition:border-color 0.3s;}
 .flashcard::before{content:"";position:absolute;top:0;left:0;width:3px;height:100%;
   background:linear-gradient(to bottom,var(--cyan),transparent);}
-.fc-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+.fc-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;gap:0.75rem;flex-wrap:wrap;}
 .fc-qnum{font-family:var(--mono);font-size:0.72rem;color:var(--cyan);letter-spacing:0.1em;}
 .fc-topic{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;
   padding:0.25rem 0.7rem;background:var(--cyan2);color:var(--cyan);border:1px solid rgba(5,245,233,0.2);}
@@ -279,6 +279,27 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .pill-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .pill-count{font-family:var(--mono);font-size:0.6rem;opacity:0.7;margin-left:1px;}
 
+/* MARK FOR REVISION */
+.fc-mark-btn{padding:0.4rem 1rem;border:1px solid rgba(232,201,122,0.5);background:rgba(232,201,122,0.06);
+  color:var(--gold);font-family:"DM Sans",sans-serif;font-size:0.72rem;
+  letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;
+  white-space:nowrap;flex-shrink:0;}
+.fc-mark-btn:hover{border-color:var(--gold);background:var(--gold2);box-shadow:0 0 10px rgba(232,201,122,0.2);}
+.fc-mark-btn.marked{border-color:var(--gold);background:var(--gold2);color:var(--gold);
+  box-shadow:0 0 12px rgba(232,201,122,0.3);}
+.revision-bar{max-width:1400px;margin:-0.5rem auto 1.5rem;padding:0 4vw;display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;}
+.revision-bar-btn{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 1.1rem;
+  border:1px solid rgba(232,201,122,0.2);background:transparent;
+  color:rgba(232,201,122,0.5);font-family:"DM Sans",sans-serif;
+  font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;}
+.revision-bar-btn:hover{border-color:var(--gold);color:var(--gold);}
+.revision-bar-btn.active{border-color:var(--gold);background:var(--gold2);color:var(--gold);
+  box-shadow:0 0 10px rgba(232,201,122,0.15);}
+.revision-count-badge{font-family:var(--mono);font-size:0.65rem;
+  background:rgba(232,201,122,0.15);padding:0.1rem 0.45rem;}
+.q-nav-btn.q-marked{border-color:rgba(232,201,122,0.4);color:rgba(232,201,122,0.75);}
+.q-nav-btn.q-marked.q-current{border-color:var(--gold);background:var(--gold2);color:var(--gold);}
+
 /* UTILITY */
 .hidden{display:none !important;}
 @media(max-width:768px){
@@ -325,6 +346,13 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
     <div class="domain-pills" id="domain-pills-study"></div>
   </div>
 
+  <!-- REVISION BAR -->
+  <div class="revision-bar">
+    <button class="revision-bar-btn" id="revision-bar-btn" onclick="toggleRevisionMode()">
+      ★ Revision List <span class="revision-count-badge" id="revision-count">0</span>
+    </button>
+  </div>
+
   <div class="progress-wrap">
     <div class="progress-header">
       <span class="progress-label">Progress</span>
@@ -349,6 +377,7 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
           <span id="fc-domain-badge" style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.18rem 0.55rem;border:1px solid;"></span>
           <span class="fc-topic" id="fc-topic">Topic</span>
         </div>
+        <button class="fc-mark-btn" id="fc-mark-btn" onclick="toggleMarkCurrent()">☆ Revision</button>
       </div>
       <p class="fc-question" id="fc-question">Loading…</p>
       <div class="fc-options" id="fc-options"></div>
@@ -456,6 +485,55 @@ let timerInterval = null;
 let timeLeft = 600;
 let activeDomain = 0;
 let activeExamDomain = 0;
+let showMarkedOnly = false;
+let markedQuestions = new Set(JSON.parse(localStorage.getItem('gcpMleMarked') || '[]'));
+
+function saveMarked(){
+  localStorage.setItem('gcpMleMarked', JSON.stringify([...markedQuestions]));
+}
+
+function toggleMarkCurrent(){
+  const qId = QUESTIONS[studyOrder[studyIdx]].id;
+  if(markedQuestions.has(qId)) markedQuestions.delete(qId);
+  else markedQuestions.add(qId);
+  saveMarked();
+  updateRevisionBar();
+  renderMarkBtn();
+  renderQuestionNavigator();
+}
+
+function renderMarkBtn(){
+  const btn = document.getElementById('fc-mark-btn');
+  if(!btn) return;
+  const qId = QUESTIONS[studyOrder[studyIdx]].id;
+  const isMarked = markedQuestions.has(qId);
+  btn.classList.toggle('marked', isMarked);
+  btn.textContent = isMarked ? '★ Marked' : '☆ Revision';
+  btn.title = isMarked ? 'Remove from revision list' : 'Mark for last-minute revision';
+}
+
+function updateRevisionBar(){
+  const countEl = document.getElementById('revision-count');
+  if(countEl) countEl.textContent = markedQuestions.size;
+  const btn = document.getElementById('revision-bar-btn');
+  if(btn) btn.classList.toggle('active', showMarkedOnly);
+}
+
+function toggleRevisionMode(){
+  if(!showMarkedOnly && markedQuestions.size === 0){
+    alert('No questions marked yet. While studying, click "☆ Revision" on any question to add it to your revision list.');
+    return;
+  }
+  showMarkedOnly = !showMarkedOnly;
+  updateRevisionBar();
+  if(showMarkedOnly){
+    studyOrder = QUESTIONS.map((_,i)=>i).filter(i => markedQuestions.has(QUESTIONS[i].id));
+  } else {
+    studyOrder = QUESTIONS.map((_,i)=>i).filter(i => activeDomain===0 || QUESTIONS[i].domain===activeDomain);
+  }
+  studyIdx = 0;
+  renderStudyCard();
+}
 
 const DOMAIN_INFO = [
   {id:0, name:'All Domains',          short:'All',           color:'#05f5e9'},
@@ -486,6 +564,8 @@ function renderDomainPills(containerId, activeD, onClickFn){
 
 function setStudyDomain(d){
   activeDomain = d;
+  showMarkedOnly = false;
+  updateRevisionBar();
   studyOrder = QUESTIONS.map((_,i)=>i).filter(i => d===0 || QUESTIONS[i].domain===d);
   studyIdx = 0;
   answeredStudy = {};
@@ -514,6 +594,7 @@ async function loadQuestions(){
   setExamDomain(0);
   studyOrder = QUESTIONS.map((_,i)=>i);
   document.getElementById('remaining-count').textContent = QUESTIONS.length;
+  updateRevisionBar();
   renderStudyCard();
 }
 
@@ -622,6 +703,7 @@ function renderStudyCard(){
 
   document.getElementById('btn-prev').disabled = studyIdx === 0;
   document.getElementById('btn-next').textContent = studyIdx === total-1 ? '✓ Finish' : 'Next →';
+  renderMarkBtn();
   renderQuestionNavigator();
 }
 
@@ -681,6 +763,7 @@ function renderQuestionNavigator(){
     btn.title = 'Q' + QUESTIONS[qIdx].id + ': ' + QUESTIONS[qIdx].topic;
     if(pos === studyIdx) btn.classList.add('q-current');
     if(answeredStudy[qIdx] !== undefined) btn.classList.add('q-answered');
+    if(markedQuestions.has(QUESTIONS[qIdx].id)) btn.classList.add('q-marked');
     btn.onclick = () => { studyIdx = pos; renderStudyCard(); document.getElementById('flashcard').scrollIntoView({behavior:'smooth',block:'start'}); };
     grid.appendChild(btn);
   });
