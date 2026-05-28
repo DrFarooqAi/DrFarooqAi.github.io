@@ -267,6 +267,18 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .page-footer-txt{font-size:0.7rem;color:var(--dimmed);letter-spacing:0.1em;}
 .page-footer-txt a{color:var(--cyan);text-decoration:none;}
 
+/* DOMAIN FILTER */
+.domain-filter-wrap{max-width:1400px;margin:0 auto 1.8rem;padding:0 4vw;}
+.domain-filter-label{font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.7rem;}
+.domain-pills{display:flex;flex-wrap:wrap;gap:0.4rem;}
+.domain-pill{padding:0.4rem 0.85rem;border:1px solid rgba(5,245,233,0.12);background:var(--glass);
+  color:var(--muted);font-family:"DM Sans",sans-serif;font-size:0.72rem;letter-spacing:0.05em;
+  cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.45rem;white-space:nowrap;}
+.domain-pill:hover:not(.active){border-color:rgba(5,245,233,0.28);color:var(--white);background:rgba(255,255,255,0.03);}
+.domain-pill.active{color:var(--navy);font-weight:500;}
+.pill-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.pill-count{font-family:var(--mono);font-size:0.6rem;opacity:0.7;margin-left:1px;}
+
 /* UTILITY */
 .hidden{display:none !important;}
 @media(max-width:768px){
@@ -306,6 +318,13 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 
 <!-- ══════════════════════════════════════════ STUDY MODE ══ -->
 <div id="study-mode">
+
+  <!-- DOMAIN FILTER -->
+  <div class="domain-filter-wrap">
+    <div class="domain-filter-label">Filter by Domain</div>
+    <div class="domain-pills" id="domain-pills-study"></div>
+  </div>
+
   <div class="progress-wrap">
     <div class="progress-header">
       <span class="progress-label">Progress</span>
@@ -326,7 +345,10 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
     <div class="flashcard" id="flashcard">
       <div class="fc-meta">
         <span class="fc-qnum" id="fc-qnum">Q —</span>
-        <span class="fc-topic" id="fc-topic">Topic</span>
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <span id="fc-domain-badge" style="font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.18rem 0.55rem;border:1px solid;"></span>
+          <span class="fc-topic" id="fc-topic">Topic</span>
+        </div>
       </div>
       <p class="fc-question" id="fc-question">Loading…</p>
       <div class="fc-options" id="fc-options"></div>
@@ -369,9 +391,11 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
     <div class="exam-start-card">
       <h2 class="exam-start-h2">Mock Exam Simulation</h2>
       <p class="exam-start-info">Answer all questions, then submit to receive your score report with detailed explanations for every question.</p>
+      <div class="domain-filter-label" style="text-align:left;margin-bottom:0.6rem;">Focus on a Domain (optional)</div>
+      <div class="domain-pills" id="domain-pills-exam" style="margin-bottom:1.8rem;"></div>
       <div class="exam-info-grid">
-        <div class="exam-info-item"><span class="exam-info-num" id="q-count-display">5</span><span class="exam-info-lbl">Questions</span></div>
-        <div class="exam-info-item"><span class="exam-info-num">10</span><span class="exam-info-lbl">Minutes</span></div>
+        <div class="exam-info-item"><span class="exam-info-num" id="q-count-display">247</span><span class="exam-info-lbl">Questions</span></div>
+        <div class="exam-info-item"><span class="exam-info-num" id="exam-time-display">494</span><span class="exam-info-lbl">Minutes</span></div>
         <div class="exam-info-item"><span class="exam-info-num">70%</span><span class="exam-info-lbl">Pass Mark</span></div>
       </div>
       <button class="start-btn" onclick="startExam()">Begin Exam →</button>
@@ -423,12 +447,60 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 <script>
 /* ── DATA ── */
 let QUESTIONS = [];
+let EXAM_QUESTIONS = [];
 let studyOrder = [];
 let studyIdx = 0;
 let answeredStudy = {};
 let examAnswers = {};
 let timerInterval = null;
-let timeLeft = 600; // 10 min
+let timeLeft = 600;
+let activeDomain = 0;
+let activeExamDomain = 0;
+
+const DOMAIN_INFO = [
+  {id:0, name:'All Domains',          short:'All',           color:'#05f5e9'},
+  {id:1, name:'D1: Low-Code AI',      short:'Low-Code AI',   color:'#7c9dff'},
+  {id:2, name:'D2: Governance',       short:'Governance',    color:'#e8c97a'},
+  {id:3, name:'D3: Scale & Train',    short:'Scale & Train', color:'#c77dff'},
+  {id:4, name:'D4: Serving',          short:'Serving',       color:'#05f5b0'},
+  {id:5, name:'D5: MLOps',            short:'MLOps',         color:'#ff9f43'},
+  {id:6, name:'D6: Monitoring',       short:'Monitoring',    color:'#ff6b6b'},
+];
+
+/* ── DOMAIN PILLS ── */
+function renderDomainPills(containerId, activeD, onClickFn){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = '';
+  DOMAIN_INFO.forEach(d => {
+    const count = d.id === 0 ? QUESTIONS.length : QUESTIONS.filter(q => q.domain === d.id).length;
+    const pill = document.createElement('button');
+    const isActive = activeD === d.id;
+    pill.className = 'domain-pill' + (isActive ? ' active' : '');
+    if(isActive) pill.style.background = d.color;
+    pill.innerHTML = `<span class="pill-dot" style="background:${d.color};${isActive?'box-shadow:0 0 5px '+d.color:''}"></span>${d.short}<span class="pill-count">${count}</span>`;
+    pill.onclick = () => onClickFn(d.id);
+    el.appendChild(pill);
+  });
+}
+
+function setStudyDomain(d){
+  activeDomain = d;
+  studyOrder = QUESTIONS.map((_,i)=>i).filter(i => d===0 || QUESTIONS[i].domain===d);
+  studyIdx = 0;
+  answeredStudy = {};
+  renderDomainPills('domain-pills-study', d, setStudyDomain);
+  renderStudyCard();
+}
+
+function setExamDomain(d){
+  activeExamDomain = d;
+  const count = d===0 ? QUESTIONS.length : QUESTIONS.filter(q=>q.domain===d).length;
+  document.getElementById('q-count-display').textContent = count;
+  const mins = Math.ceil(count * 2);
+  document.getElementById('exam-time-display').textContent = mins;
+  renderDomainPills('domain-pills-exam', d, setExamDomain);
+}
 
 /* ── LOAD JSON ── */
 async function loadQuestions(){
@@ -436,11 +508,11 @@ async function loadQuestions(){
     const r = await fetch('questions.json');
     QUESTIONS = await r.json();
   } catch(e){
-    // fallback: hardcoded sample if fetch fails (e.g. file:// protocol)
-    QUESTIONS = [{"id":1,"topic":"Demo","question":"This is a sample question. Load questions.json to see real content.","options":{"A":"Option A","B":"Option B","C":"Option C","D":"Option D"},"correct":"A","analogy":"This is an analogy.","explanation":"This is the explanation.","why_not":"These are the wrong answers."}];
+    QUESTIONS = [{"id":1,"topic":"Demo","question":"This is a sample question. Load questions.json to see real content.","options":{"A":"Option A","B":"Option B","C":"Option C","D":"Option D"},"correct":"A","analogy":"This is an analogy.","explanation":"This is the explanation.","why_not":"These are the wrong answers.","domain":1}];
   }
+  renderDomainPills('domain-pills-study', 0, setStudyDomain);
+  setExamDomain(0);
   studyOrder = QUESTIONS.map((_,i)=>i);
-  document.getElementById('q-count-display').textContent = QUESTIONS.length;
   document.getElementById('remaining-count').textContent = QUESTIONS.length;
   renderStudyCard();
 }
@@ -508,6 +580,14 @@ function renderStudyCard(){
 
   document.getElementById('fc-qnum').textContent = 'Q ' + q.id;
   document.getElementById('fc-topic').textContent = q.topic;
+  const di = DOMAIN_INFO.find(d=>d.id===q.domain);
+  const domainEl = document.getElementById('fc-domain-badge');
+  if(domainEl && di){
+    domainEl.textContent = 'D'+q.domain+': '+di.short;
+    domainEl.style.color = di.color;
+    domainEl.style.borderColor = di.color+'44';
+    domainEl.style.background = di.color+'11';
+  }
   document.getElementById('fc-question').innerHTML = highlight(q.question);
   document.getElementById('prog-count').textContent = (studyIdx+1) + ' / ' + total;
   document.getElementById('prog-fill').style.width = pct + '%';
@@ -619,10 +699,13 @@ function shuffleQuestions(){
 /* ════════════════════════════ EXAM MODE ═════════════ */
 function startExam(){
   examAnswers = {};
-  timeLeft = QUESTIONS.length * 120; // 2 min per question
+  EXAM_QUESTIONS = activeExamDomain===0 ? QUESTIONS.slice() : QUESTIONS.filter(q=>q.domain===activeExamDomain);
+  timeLeft = EXAM_QUESTIONS.length * 120;
   document.getElementById('exam-start').classList.add('hidden');
   document.getElementById('exam-active').classList.remove('hidden');
   document.getElementById('exam-questions-list').style.display='block';
+  document.getElementById('remaining-count').textContent = EXAM_QUESTIONS.length;
+  document.getElementById('answered-count').textContent = '0';
   renderExamQuestions();
   startTimer();
 }
@@ -631,14 +714,18 @@ function renderExamQuestions(){
   const el = document.getElementById('exam-questions-list');
   el.innerHTML = '';
   const submitted = el.dataset.submitted === 'true';
-  QUESTIONS.forEach((q,qi)=>{
+  EXAM_QUESTIONS.forEach((q,qi)=>{
     const div = document.createElement('div');
     div.className='exam-q' + (examAnswers[qi]!==undefined?' answered':'');
     div.id='exam-q-'+qi;
+    const dInfo = DOMAIN_INFO.find(d=>d.id===q.domain)||DOMAIN_INFO[0];
     div.innerHTML=`
       <div class="exam-q-meta">
         <span class="exam-q-num">Q ${q.id}</span>
-        <span class="exam-q-topic">${q.topic}</span>
+        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+          <span style="font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.15rem 0.5rem;border:1px solid ${dInfo.color}44;background:${dInfo.color}11;color:${dInfo.color};">D${q.domain}: ${dInfo.short}</span>
+          <span class="exam-q-topic">${q.topic}</span>
+        </div>
       </div>
       <p class="exam-q-text">${highlight(q.question)}</p>
       <div class="exam-opts" id="eopts-${qi}"></div>
@@ -662,8 +749,7 @@ function renderExamQuestions(){
 
 function selectExamOption(qi, key){
   if(document.getElementById('exam-questions-list').dataset.submitted==='true') return;
-  // deselect previous
-  const q = QUESTIONS[qi];
+  const q = EXAM_QUESTIONS[qi];
   Object.keys(q.options).forEach(k=>{
     const o=document.getElementById('eopt-'+qi+'-'+k);
     if(o) o.classList.remove('sel');
@@ -698,9 +784,8 @@ function updateTimerDisplay(){
 function submitExam(){
   clearInterval(timerInterval);
   document.getElementById('exam-questions-list').dataset.submitted='true';
-  // calculate score
   let correct=0;
-  QUESTIONS.forEach((q,qi)=>{
+  EXAM_QUESTIONS.forEach((q,qi)=>{
     if(q.correct.includes(examAnswers[qi])) correct++;
   });
   const pct=Math.round((correct/QUESTIONS.length)*100);
@@ -709,8 +794,8 @@ function submitExam(){
   document.getElementById('exam-results').style.display='block';
   document.getElementById('res-score').textContent=pct+'%';
   document.getElementById('res-correct').textContent=correct;
-  document.getElementById('res-wrong').textContent=QUESTIONS.length-correct;
-  document.getElementById('res-total').textContent=QUESTIONS.length;
+  document.getElementById('res-wrong').textContent=EXAM_QUESTIONS.length-correct;
+  document.getElementById('res-total').textContent=EXAM_QUESTIONS.length;
   // message
   let msg = pct>=70
     ? '"Excellent work. You are ready for the exam."'
@@ -725,7 +810,7 @@ function submitExam(){
 function renderReview(){
   const el=document.getElementById('review-list');
   el.innerHTML='';
-  QUESTIONS.forEach((q,qi)=>{
+  EXAM_QUESTIONS.forEach((q,qi)=>{
     const chosen=examAnswers[qi];
     const isCorrect=q.correct.includes(chosen);
     const div=document.createElement('div');
@@ -768,7 +853,7 @@ function retryExam(){
   document.getElementById('exam-active').classList.add('hidden');
   document.getElementById('exam-start').classList.remove('hidden');
   document.getElementById('answered-count').textContent='0';
-  document.getElementById('remaining-count').textContent=QUESTIONS.length;
+  setExamDomain(activeExamDomain);
 }
 
 /* ── MODE SWITCH ── */
