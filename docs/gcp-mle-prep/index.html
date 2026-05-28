@@ -279,6 +279,24 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 .pill-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .pill-count{font-family:var(--mono);font-size:0.6rem;opacity:0.7;margin-left:1px;}
 
+/* HINT */
+.fc-hint-toggle{display:flex;align-items:center;gap:0.6rem;width:100%;padding:0.55rem 0.9rem;
+  background:none;border:1px dashed rgba(220,235,245,0.12);color:var(--dimmed);
+  font-family:"DM Sans",sans-serif;font-size:0.73rem;letter-spacing:0.1em;text-transform:uppercase;
+  cursor:pointer;transition:all 0.3s;margin-bottom:0.5rem;}
+.fc-hint-toggle:hover{border-color:rgba(220,235,245,0.28);color:var(--muted);}
+.fc-hint-toggle.has-hint{border-color:rgba(232,201,122,0.3);color:var(--gold);}
+.fc-hint-toggle.open{border-style:solid;}
+.fc-hint-arrow{font-size:0.6rem;transition:transform 0.25s;display:inline-block;}
+.fc-hint-toggle.open .fc-hint-arrow{transform:rotate(90deg);}
+.fc-hint-body{display:none;margin-bottom:1rem;}
+.fc-hint-body.open{display:block;animation:slide-in 0.25s ease;}
+.fc-hint-textarea{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(220,235,245,0.1);
+  color:var(--white);font-family:"DM Sans",sans-serif;font-size:0.95rem;line-height:1.6;
+  padding:0.75rem 1rem;resize:vertical;min-height:56px;outline:none;transition:border-color 0.2s;}
+.fc-hint-textarea:focus{border-color:rgba(220,235,245,0.25);}
+.fc-hint-textarea::placeholder{color:var(--dimmed);}
+
 /* MARK FOR REVISION */
 .fc-mark-btn{padding:0.4rem 1rem;border:1px solid rgba(232,201,122,0.5);background:rgba(232,201,122,0.06);
   color:var(--gold);font-family:"DM Sans",sans-serif;font-size:0.72rem;
@@ -381,6 +399,13 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
       </div>
       <p class="fc-question" id="fc-question">Loading…</p>
       <div class="fc-options" id="fc-options"></div>
+      <button class="fc-hint-toggle" id="fc-hint-toggle" onclick="toggleHint()">
+        <span class="fc-hint-arrow">&#9658;</span>
+        <span id="fc-hint-label">&#9671; Add Hint</span>
+      </button>
+      <div class="fc-hint-body" id="fc-hint-body">
+        <textarea class="fc-hint-textarea" id="fc-hint-textarea" placeholder="Write your own hint or mnemonic for this question…" oninput="saveHint()"></textarea>
+      </div>
       <button class="fc-reveal-btn" id="fc-reveal" onclick="revealAnswer()">&#9654; Show Answer &amp; Explanation</button>
       <div class="fc-answer" id="fc-answer">
         <div id="ans-correct-badge" class="ans-correct-badge">&#10003; Correct Answer: <strong id="ans-correct-letter" style="font-size:0.85rem;margin-left:0.2rem;"></strong></div>
@@ -487,6 +512,44 @@ let activeDomain = 0;
 let activeExamDomain = 0;
 let showMarkedOnly = false;
 let markedQuestions = new Set(JSON.parse(localStorage.getItem('gcpMleMarked') || '[]'));
+let hints = JSON.parse(localStorage.getItem('gcpMleHints') || '{}');
+
+function toggleHint(){
+  const body = document.getElementById('fc-hint-body');
+  const toggle = document.getElementById('fc-hint-toggle');
+  const isOpen = body.classList.toggle('open');
+  toggle.classList.toggle('open', isOpen);
+  if(isOpen) document.getElementById('fc-hint-textarea').focus();
+}
+
+function saveHint(){
+  const qId = String(QUESTIONS[studyOrder[studyIdx]].id);
+  const val = document.getElementById('fc-hint-textarea').value;
+  if(val.trim()) hints[qId] = val;
+  else delete hints[qId];
+  localStorage.setItem('gcpMleHints', JSON.stringify(hints));
+  refreshHintToggleLabel(qId);
+}
+
+function loadHint(qId){
+  qId = String(qId);
+  const textarea = document.getElementById('fc-hint-textarea');
+  const body = document.getElementById('fc-hint-body');
+  const toggle = document.getElementById('fc-hint-toggle');
+  textarea.value = hints[qId] || '';
+  body.classList.remove('open');
+  toggle.classList.remove('open');
+  refreshHintToggleLabel(qId);
+}
+
+function refreshHintToggleLabel(qId){
+  const hasHint = !!(hints[String(qId)] && hints[String(qId)].trim());
+  const toggle = document.getElementById('fc-hint-toggle');
+  const label = document.getElementById('fc-hint-label');
+  if(!toggle || !label) return;
+  label.textContent = hasHint ? '★ Hint' : '◇ Add Hint';
+  toggle.classList.toggle('has-hint', hasHint);
+}
 
 function saveMarked(){
   localStorage.setItem('gcpMleMarked', JSON.stringify([...markedQuestions]));
@@ -704,6 +767,7 @@ function renderStudyCard(){
   document.getElementById('btn-prev').disabled = studyIdx === 0;
   document.getElementById('btn-next').textContent = studyIdx === total-1 ? '✓ Finish' : 'Next →';
   renderMarkBtn();
+  loadHint(q.id);
   renderQuestionNavigator();
 }
 
