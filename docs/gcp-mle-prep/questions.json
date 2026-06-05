@@ -4200,5 +4200,59 @@
     "why_not": "Options B and D (Deep Neural Networks) violate the interpretability requirement — DNNs are black box models where it is very difficult to understand why a specific prediction was made without complex post-hoc analysis like SHAP values; they also require more expensive hardware and longer training times, violating the speed and cost constraints. Option C (AutoML) is powerful but suboptimal here: AutoML provides feature importance but not the granular equation-level transparency of Logistic Regression; it involves data upload, job scheduling, and automated hyperparameter tuning taking significantly longer than a quick notebook script; and AutoML services charge for node hours and storage, making it more expensive than running a simple script on a standard notebook instance.",
     "domain": 3,
     "domain_name": "Scale Prototypes to Production"
+  },
+  {
+    "id": 253,
+    "topic": "AutoML Tables — No-Code Customer Purchase Prediction with Vertex AI",
+    "question": "You have a spreadsheet of customer data in Google Sheets. You want to predict whether a customer will buy a product (Yes/No) using machine learning, but you don't know how to code. What is the easiest way to do this on Google Cloud?",
+    "options": {
+      "A": "Write a Python script using TensorFlow, upload it to Vertex AI, and train the model manually.",
+      "B": "Use Vertex AI AutoML Tables: upload your spreadsheet, click \"Train,\" and let Google Cloud build the model for you.",
+      "C": "Export your data to a CSV file, email it to a data scientist, and wait for them to build a model.",
+      "D": "Copy your data into a BigQuery table and write complex SQL queries to predict the outcome yourself."
+    },
+    "correct": "B",
+    "analogy": "Think of this like baking a cake. Option A: Writing your own recipe from scratch, buying individual ingredients, and using a professional oven — delicious, but requires expertise. Option B: Using a cake mix and a smart oven that does all the work. Just add your ingredients (data), press a button, and get a great cake (model) — perfect for beginners! Option C: Asking a professional baker to make the cake for you — works, but slow and not self-service. Option D: Trying to bake the cake using only a microwave and a cookbook written in a foreign language — possible, but very hard and frustrating. When you're just starting out, use the tool designed to do the heavy lifting for you.",
+    "explanation": "Vertex AI AutoML Tables is built exactly for this scenario. No code required — upload your data (CSV, Google Sheets, or BigQuery), click a button, and AutoML handles the rest. Automatic feature engineering — it figures out which columns matter and how to use them. Automatic model selection — it tries different algorithms and picks the best one for your data. One-click deployment — when training is done, you can deploy your model to get predictions with just a few clicks. This is the fastest, simplest way for beginners to build and use a machine learning model on Google Cloud.",
+    "why_not": "Option A requires writing code in Python and understanding TensorFlow — too advanced for someone who does not know how to code. Option C works but is not self-service or scalable, and does not use Google Cloud's automated ML tools. Option D requires advanced SQL skills and manual model building — BigQuery ML is powerful, but it is not the easiest path for a beginner with no coding experience.",
+    "domain": 1,
+    "domain_name": "Low-Code AI Solutions",
+    "free": true
+  },
+  {
+    "id": 254,
+    "topic": "BigQuery SQL — Finding Highest Total Sales by Product Category",
+    "question": "You have a table in BigQuery with customer purchase data. You want to find out which product category has the highest total sales. What is the simplest way to do this?",
+    "options": {
+      "A": "Export the data to a CSV file, open it in Excel, and manually sum the sales for each category.",
+      "B": "Write a SQL query in BigQuery that groups by product category and sums the sales, then sorts to find the highest.",
+      "C": "Use Vertex AI AutoML to train a model that predicts the best-selling category.",
+      "D": "Copy the data into a Google Sheet and use a pivot table to calculate the totals."
+    },
+    "correct": "B",
+    "analogy": "Think of this like finding the tallest person in a room. Option A: Asking everyone to write their height on a piece of paper, then taking all the papers to another room to measure and compare them one by one — slow and extra work. Option B: Just looking around the room and pointing to the tallest person — fast, direct, and done right where the data lives. Option C: Building a robot that learns to guess who is tall based on their shoes, hair color, and voice — overkill for a simple question! Option D: Asking everyone to write their height on a sticky note, then sticking all the notes on a whiteboard to compare — works, but why leave the room? When your data is already in BigQuery, ask your question right there using SQL — the fastest, simplest tool for the job.",
+    "explanation": "BigQuery is built for answering questions with SQL — no exporting, no extra tools needed. A simple query like: SELECT product_category, SUM(sales_amount) AS total_sales FROM your_table GROUP BY product_category ORDER BY total_sales DESC LIMIT 1 — solves the problem in seconds. BigQuery is fast (processes terabytes in seconds), simple (just a few lines of SQL), requires no data movement (query the data where it lives), and free to start (generous free tier). This is the easiest, most direct way for beginners to get answers from their data.",
+    "why_not": "Option A (Export to Excel) adds unnecessary steps — exporting, downloading, opening, and manually calculating — and breaks when your data grows beyond Excel's limits of approximately 1 million rows. Option C (AutoML) is for predicting future outcomes, not summarizing past data — using machine learning to find the highest sales category is like using a rocket to go to the grocery store: powerful, but not the right tool. Option D (Google Sheets pivot table) works for small datasets but does not scale — BigQuery can handle billions of rows while Sheets cannot, and you would still need to export and import data, adding complexity.",
+    "domain": 1,
+    "domain_name": "Low-Code AI Solutions",
+    "free": true
+  },
+  {
+    "id": 255,
+    "topic": "Vertex AI Model Registry — Managing and Versioning ML Models (MLOps)",
+    "question": "You built a machine learning model that predicts customer churn. After deploying it, you made some improvements and trained a new version. Now you have two models: v1 (old) and v2 (new). What is the simplest way to keep track of which model is which and avoid confusion?",
+    "options": {
+      "A": "Save both models in the same folder with names like model_final_updated_v2_reallyfinal.pkl.",
+      "B": "Write down the model details in a notebook and hope your team remembers to check it.",
+      "C": "Use Vertex AI Model Registry to upload both versions with clear names and descriptions, so you can see them side-by-side and deploy the right one.",
+      "D": "Email the model files to your team and let everyone decide which one to use."
+    },
+    "correct": "C",
+    "analogy": "Think of this like organizing files on your computer. Option A: Naming files report_final_final_v2_REALLYFINAL.docx — confusing, and you will never know which is which later. Option B: Writing a sticky note that says 'the good report is in the blue folder' — works until someone moves the folder or loses the note. Option C: Using a clean folder system with clear names like Reports/2024/Q1/Sales_Report_v1.pdf and Sales_Report_v2.pdf — easy to find, compare, and share. Option D: Emailing files to 10 people and hoping everyone uses the same version — chaos guaranteed. When you have multiple versions of anything, use a system designed to organize them, not guesswork.",
+    "explanation": "Vertex AI Model Registry is a simple, built-in tool for managing model versions. Clear naming — give each model a version number and description (e.g., churn_model_v1, churn_model_v2_improved_features). Side-by-side comparison — see metrics, creation dates, and metadata for all versions in one place. Easy deployment — click to deploy the version you want to production. Team-friendly — everyone on your team sees the same organized list with no confusion. This is the easiest way for beginners to practice good MLOps habits without complex tools or code.",
+    "why_not": "Option A (creative filenames) is error-prone and does not scale — what happens when you have v3, v4, v5? Humans will make mistakes. Option B (notebook notes) relies on memory and discipline — if someone forgets to check the notebook, they might deploy the wrong model. Option D (emailing files) creates version chaos — different team members might use different models, making results inconsistent and debugging impossible.",
+    "domain": 5,
+    "domain_name": "Pipeline Orchestration (MLOps)",
+    "free": true
   }
 ]
