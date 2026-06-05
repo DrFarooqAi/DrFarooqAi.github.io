@@ -328,6 +328,36 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
   .fc-nav{flex-wrap:wrap;gap:0.5rem;}
   .hero-h1{font-size:1.8rem;}
 }
+/* ── EMAIL GATE ── */
+.gate-overlay{position:fixed;inset:0;z-index:2000;background:rgba(2,8,12,.93);
+  backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;}
+.gate-overlay.hidden{display:none;}
+.gate-card{background:#0b1519;border:1px solid rgba(5,245,233,.22);border-radius:22px;
+  padding:44px 38px;max-width:430px;width:100%;text-align:center;
+  box-shadow:0 0 60px rgba(5,245,233,.06);}
+.gate-icon{font-size:2.6rem;margin-bottom:18px;}
+.gate-title{font-family:"Cormorant Garamond",serif;font-size:2rem;font-weight:400;
+  color:#e8f4f3;margin-bottom:10px;}
+.gate-sub{color:#6b8a88;font-size:.92rem;line-height:1.7;margin-bottom:26px;}
+.gate-sub strong{color:#9fb3b1;}
+.gate-input{width:100%;padding:13px 16px;background:rgba(5,245,233,.05);
+  border:1px solid rgba(5,245,233,.2);border-radius:11px;color:#e8f4f3;
+  font-size:1rem;margin-bottom:11px;outline:none;transition:border-color .2s;
+  font-family:inherit;}
+.gate-input:focus{border-color:rgba(5,245,233,.6);}
+.gate-input.shake{animation:gShake .35s ease;}
+.gate-btn{width:100%;padding:13px;background:#05f5e9;color:#02080c;border:none;
+  border-radius:11px;font-weight:700;font-size:.95rem;cursor:pointer;
+  transition:opacity .2s;letter-spacing:.03em;}
+.gate-btn:hover{opacity:.88;}
+.gate-btn:disabled{opacity:.45;cursor:not-allowed;}
+.gate-note{color:#3d5a58;font-size:.73rem;margin-top:14px;}
+.gate-preview-bar{display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-bottom:22px;flex-wrap:wrap;}
+.gate-pill{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 11px;border-radius:100px;border:1px solid rgba(5,245,233,.18);
+  color:rgba(5,245,233,.65);background:rgba(5,245,233,.05);}
+@keyframes gShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 </style>
 </head>
 <body>
@@ -493,6 +523,24 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 
 </div>
 
+<!-- EMAIL GATE OVERLAY -->
+<div class="gate-overlay hidden" id="gate-overlay">
+  <div class="gate-card">
+    <div class="gate-icon">🔓</div>
+    <h2 class="gate-title">Unlock All 252 Questions</h2>
+    <p class="gate-sub">You've seen the 3 free preview questions.<br>Enter your email for <strong>instant free access</strong> to the complete question bank.</p>
+    <div class="gate-preview-bar">
+      <span class="gate-pill">252 questions</span>
+      <span class="gate-pill">6 domains</span>
+      <span class="gate-pill">study + exam mode</span>
+      <span class="gate-pill">free forever</span>
+    </div>
+    <input type="email" id="gate-email" class="gate-input" placeholder="your@email.com" autocomplete="email" />
+    <button id="gate-btn" class="gate-btn" onclick="submitGate()">Unlock Free Access →</button>
+    <p class="gate-note">No password · No spam · Instant access</p>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <div class="page-footer">
   <p class="page-footer-txt">Dr. Muhammad Farooq &mdash; AI in Healthcare &nbsp;|&nbsp; <a href="https://drfarooqai.github.io">drfarooqai.github.io</a> &nbsp;|&nbsp; GCP MLE Prep Questions</p>
@@ -502,6 +550,58 @@ nav{position:sticky;top:0;z-index:100;padding:1rem 4vw;display:flex;align-items:
 /* ── DATA ── */
 let QUESTIONS = [];
 let EXAM_QUESTIONS = [];
+
+/* ── EMAIL GATE ──
+   Set GATE_ENDPOINT to your Formspree / Web3Forms URL to collect emails.
+   Leave empty to gate with localStorage only (no collection).            */
+const GATE_ENDPOINT = '';
+
+const isUnlocked = () => localStorage.getItem('gcp_unlocked') === '1';
+
+function showGate(){
+  document.getElementById('gate-overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('gate-email').focus(), 80);
+}
+
+async function submitGate(){
+  const email = document.getElementById('gate-email').value.trim();
+  const input = document.getElementById('gate-email');
+  if(!email || !email.includes('@')){
+    input.classList.add('shake');
+    input.focus();
+    setTimeout(()=>input.classList.remove('shake'), 400);
+    return;
+  }
+  const btn = document.getElementById('gate-btn');
+  btn.disabled = true; btn.textContent = 'Unlocking…';
+
+  /* Silent collection — no email to user */
+  if(GATE_ENDPOINT){
+    try{
+      await fetch(GATE_ENDPOINT,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify({email, source:'gcp-mle-prep', ts: new Date().toISOString()})
+      });
+    }catch(e){ /* fail silently */ }
+  }
+
+  /* Unlock */
+  localStorage.setItem('gcp_unlocked','1');
+  document.getElementById('gate-overlay').classList.add('hidden');
+  btn.disabled = false; btn.textContent = 'Unlock Free Access →';
+
+  /* Rebuild study order with all questions, continue from current position */
+  studyOrder = QUESTIONS.map((_,i)=>i).filter(i => activeDomain===0 || QUESTIONS[i].domain===activeDomain);
+  renderStudyCard();
+  document.getElementById('remaining-count').textContent = QUESTIONS.length;
+  renderDomainPills('domain-pills-study', activeDomain, setStudyDomain);
+  setExamDomain(activeExamDomain);
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !document.getElementById('gate-overlay').classList.contains('hidden')) submitGate();
+});
 let studyOrder = [];
 let studyIdx = 0;
 let answeredStudy = {};
@@ -629,7 +729,8 @@ function setStudyDomain(d){
   activeDomain = d;
   showMarkedOnly = false;
   updateRevisionBar();
-  studyOrder = QUESTIONS.map((_,i)=>i).filter(i => d===0 || QUESTIONS[i].domain===d);
+  studyOrder = QUESTIONS.map((_,i)=>i).filter(i =>
+    (d===0 || QUESTIONS[i].domain===d) && (isUnlocked() || QUESTIONS[i].free));
   studyIdx = 0;
   answeredStudy = {};
   renderDomainPills('domain-pills-study', d, setStudyDomain);
@@ -655,8 +756,10 @@ async function loadQuestions(){
   }
   renderDomainPills('domain-pills-study', 0, setStudyDomain);
   setExamDomain(0);
-  studyOrder = QUESTIONS.map((_,i)=>i);
-  document.getElementById('remaining-count').textContent = QUESTIONS.length;
+  studyOrder = isUnlocked()
+    ? QUESTIONS.map((_,i)=>i)
+    : QUESTIONS.map((_,i)=>i).filter(i=>QUESTIONS[i].free);
+  document.getElementById('remaining-count').textContent = isUnlocked() ? QUESTIONS.length : QUESTIONS.filter(q=>q.free).length;
   updateRevisionBar();
   renderStudyCard();
 }
@@ -807,6 +910,7 @@ function toggleWhyNot(){
 }
 
 function navigate(dir){
+  if(dir > 0 && !isUnlocked() && studyIdx >= studyOrder.length - 1){ showGate(); return; }
   studyIdx = Math.max(0, Math.min(studyOrder.length-1, studyIdx+dir));
   renderStudyCard();
 }
@@ -845,6 +949,7 @@ function shuffleQuestions(){
 
 /* ════════════════════════════ EXAM MODE ═════════════ */
 function startExam(){
+  if(!isUnlocked()){ showGate(); return; }
   examAnswers = {};
   EXAM_QUESTIONS = activeExamDomain===0 ? QUESTIONS.slice() : QUESTIONS.filter(q=>q.domain===activeExamDomain);
   timeLeft = EXAM_QUESTIONS.length * 120;
